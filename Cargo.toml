@@ -1,0 +1,9 @@
+[package]
+name = "ohmers"
+version = "0.1.0"
+authors = ["Sebastian Waisbrot <seppo0010@gmail.com>"]
+
+[dependencies]
+rustc-serialize = "0.3.16"
+redis = "0.5.0"
+rmp = "0.6.0"
