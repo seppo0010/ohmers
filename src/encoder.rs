@@ -82,6 +82,7 @@ impl rustc_serialize::Encoder for Encoder {
                 self.attributes.pop();
             }
             EncoderStatus::Reference(ref field) => {
+                self.attributes.pop();
                 self.attributes.push(format!("{}_id", &*field.to_ascii_lowercase()));
                 self.attributes.push(s);
             }

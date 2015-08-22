@@ -1,7 +1,15 @@
+use std::ascii::AsciiExt;
 use std::collections::HashMap;
 
 use redis;
 use rustc_serialize;
+
+#[derive(Debug, Clone, PartialEq)]
+enum DecoderStatus {
+    Unnamed,
+    Normal,
+    Reference,
+}
 
 #[derive(Debug)]
 pub enum DecoderError {
@@ -22,6 +30,7 @@ type DecodeResult<T> = Result<T, DecoderError>;
 pub struct Decoder {
     properties: HashMap<String, String>,
     stack: Vec<Option<String>>,
+    status: DecoderStatus,
 }
 
 impl Decoder {
@@ -29,6 +38,7 @@ impl Decoder {
         Decoder {
             properties: properties,
             stack: vec![],
+            status: DecoderStatus::Unnamed,
         }
     }
 }
@@ -57,7 +67,21 @@ impl rustc_serialize::Decoder for Decoder {
         Ok(())
     }
 
-    read_primitive! { read_usize, usize }
+    fn read_usize(&mut self) -> DecodeResult<usize> {
+        let v = match self.stack.pop() {
+            Some(opt_s) => match opt_s {
+                Some(s) => match s.parse() {
+                    Ok(v) => v,
+                    Err(_) => return Err(DecoderError::ExpectedError("Number".to_string(), s)),
+                },
+                None => return Err(DecoderError::ExpectedError("Number".to_string(), "None".to_string()))
+            },
+            None => return Err(DecoderError::ExpectedError("Number".to_string(), "Not found".to_string()))
+        };
+        self.status = DecoderStatus::Normal;
+        Ok(v)
+    }
+
     read_primitive! { read_u8, u8 }
     read_primitive! { read_u16, u16 }
     read_primitive! { read_u32, u32 }
@@ -143,7 +167,22 @@ impl rustc_serialize::Decoder for Decoder {
                                -> DecodeResult<T> where
         F: FnOnce(&mut Decoder) -> DecodeResult<T>,
     {
-        self.stack.push(self.properties.remove(name));
+        if self.status != DecoderStatus::Reference {
+            match self.properties.remove(name) {
+                Some(v) => self.stack.push(Some(v)),
+                None => {
+                    match self.properties.remove(&*format!("{}_id", name).to_ascii_lowercase()) {
+                        Some(id) => {
+                            self.status = DecoderStatus::Reference;
+                            self.stack.push(Some(id));
+                        },
+                        None => {
+                            self.stack.push(None);
+                        }
+                    }
+                }
+            }
+        }
         f(self)
     }
 
