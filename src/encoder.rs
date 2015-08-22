@@ -77,7 +77,7 @@ impl rustc_serialize::Encoder for Encoder {
             EncoderStatus::Normal => self.attributes.push(s),
             EncoderStatus::Id => {
                 if s != "0" {
-                    self.features.insert("id".to_string(), s);
+                    self.features.insert(self.id_field.clone(), s);
                 }
                 self.attributes.pop();
             }
@@ -171,7 +171,7 @@ impl rustc_serialize::Encoder for Encoder {
     fn emit_struct_field<F>(&mut self, name: &str, _: usize, f: F) -> EncodeResult<()> where
         F: FnOnce(&mut Encoder) -> EncodeResult<()>,
     {
-        if self.status == EncoderStatus::Normal && name == "id" {
+        if self.status == EncoderStatus::Normal && name == self.id_field {
             self.status = EncoderStatus::Id;
         } else {
             self.attributes.push(name.to_string());
