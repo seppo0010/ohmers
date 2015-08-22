@@ -35,7 +35,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
     }
 
     fn load(&mut self, id: usize, r: &redis::Client) -> Result<(), DecoderError> {
-        let mut properties:HashMap<String, String> = try!(try!(r.get_connection()).hgetall(format!("{}:{}", "Person", id)));
+        let mut properties:HashMap<String, String> = try!(try!(r.get_connection()).hgetall(format!("{}:{}", self.get_class_name(), id)));
         properties.insert("id".to_string(), format!("{}", id));
 
         let mut decoder = Decoder::new(properties);

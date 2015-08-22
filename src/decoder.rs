@@ -33,6 +33,23 @@ impl Decoder {
     }
 }
 
+macro_rules! read_primitive {
+    ($name:ident, $ty:ident) => {
+        fn $name(&mut self) -> DecodeResult<$ty> {
+            match self.stack.pop() {
+                Some(opt_s) => match opt_s {
+                    Some(s) => match s.parse() {
+                        Ok(v) => Ok(v),
+                        Err(_) => Err(DecoderError::ExpectedError("Number".to_string(), s)),
+                    },
+                    None => Err(DecoderError::ExpectedError("Number".to_string(), "None".to_string()))
+                },
+                None => Err(DecoderError::ExpectedError("Number".to_string(), "Not found".to_string()))
+            }
+        }
+    }
+}
+
 impl rustc_serialize::Decoder for Decoder {
     type Error = DecoderError;
 
@@ -40,46 +57,16 @@ impl rustc_serialize::Decoder for Decoder {
         Ok(())
     }
 
-    fn read_usize(&mut self) -> DecodeResult<usize> {
-        match self.stack.pop() {
-            Some(opt_s) => match opt_s {
-                Some(s) => match s.parse() {
-                    Ok(v) => Ok(v),
-                    Err(_) => Err(DecoderError::ExpectedError("Number".to_string(), s)),
-                },
-                None => Err(DecoderError::ExpectedError("Number".to_string(), "None".to_string()))
-            },
-            None => Err(DecoderError::ExpectedError("Number".to_string(), "Not found".to_string()))
-        }
-    }
-
-    fn read_u8(&mut self) -> DecodeResult<u8> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_u16(&mut self) -> DecodeResult<u16> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_u32(&mut self) -> DecodeResult<u32> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_u64(&mut self) -> DecodeResult<u64> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_isize(&mut self) -> DecodeResult<isize> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_i8(&mut self) -> DecodeResult<i8> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_i16(&mut self) -> DecodeResult<i16> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_i32(&mut self) -> DecodeResult<i32> {
-        Err(DecoderError::NotImplementedYet)
-    }
-    fn read_i64(&mut self) -> DecodeResult<i64> {
-        Err(DecoderError::NotImplementedYet)
-    }
+    read_primitive! { read_usize, usize }
+    read_primitive! { read_u8, u8 }
+    read_primitive! { read_u16, u16 }
+    read_primitive! { read_u32, u32 }
+    read_primitive! { read_u64, u64 }
+    read_primitive! { read_isize, isize }
+    read_primitive! { read_i8, i8 }
+    read_primitive! { read_i16, i16 }
+    read_primitive! { read_i32, i32 }
+    read_primitive! { read_i64, i64 }
 
     fn read_f32(&mut self) -> DecodeResult<f32> {
         Err(DecoderError::NotImplementedYet)
