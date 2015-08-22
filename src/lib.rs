@@ -15,17 +15,18 @@ use decoder::*;
 mod save;
 use save::SAVE;
 
+pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
+    let mut obj = T::defaults();
+    try!(obj.load(id, r));
+    Ok(obj)
+}
+
 pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Sized {
     fn id_field(&self) -> String { "id".to_string() }
     fn id(&self) -> usize;
     fn set_id(&mut self, id: usize);
 
     fn defaults() -> Self;
-    fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
-        let mut obj = T::defaults();
-        try!(obj.load(id, r));
-        Ok(obj)
-    }
 
     fn get_class_name(&self) -> String {
         let mut encoder = Encoder::new();
@@ -92,7 +93,7 @@ mod tests {
         let client = redis::Client::open("redis://127.0.0.1/").unwrap();
         let mut person = Person { id: 0, name: "Jane".to_string() };
         person.save(&client).unwrap();
-        let person2 = Person::get::<Person>(person.id, &client).unwrap();
+        let person2 = get(person.id, &client).unwrap();
         assert_eq!(person, person2);
     }
 }
