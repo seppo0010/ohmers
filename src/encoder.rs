@@ -170,10 +170,10 @@ impl rustc_serialize::Encoder for Encoder {
         Err(EncoderError::NotImplementedYet)
     }
 
-    fn emit_option<F>(&mut self, _: F) -> EncodeResult<()> where
+    fn emit_option<F>(&mut self, f: F) -> EncodeResult<()> where
         F: FnOnce(&mut Encoder) -> EncodeResult<()>,
     {
-        Err(EncoderError::NotImplementedYet)
+        f(self)
     }
 
     fn emit_option_none(&mut self) -> EncodeResult<()> {

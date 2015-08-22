@@ -37,7 +37,7 @@ impl rustc_serialize::Decoder for Decoder {
     type Error = DecoderError;
 
     fn read_nil(&mut self) -> DecodeResult<()> {
-        Err(DecoderError::NotImplementedYet)
+        Ok(())
     }
 
     fn read_usize(&mut self) -> DecodeResult<usize> {
@@ -194,7 +194,11 @@ impl rustc_serialize::Decoder for Decoder {
     fn read_option<T, F>(&mut self, mut f: F) -> DecodeResult<T> where
         F: FnMut(&mut Decoder, bool) -> DecodeResult<T>,
     {
-        f(self, true)
+        let opt = match self.stack.last() {
+            Some(ref el) => el.is_some(),
+            None => return Err(DecoderError::ExpectedError("Option".to_string(), "Not found".to_string())),
+        };
+        f(self, opt)
     }
 
     fn read_seq<T, F>(&mut self, _f: F) -> DecodeResult<T> where
