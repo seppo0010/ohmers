@@ -3,6 +3,7 @@ extern crate redis;
 extern crate rustc_serialize;
 
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
 use redis::Commands;
 
@@ -56,5 +57,25 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
                 .invoke(&try!(r.get_connection())));
         self.set_id(id);
         Ok(())
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+pub struct Reference<T: Ohmer> {
+    id: usize,
+    phantom: PhantomData<T>,
+}
+
+impl<T: Ohmer> Reference<T> {
+    pub fn new() -> Self {
+        Reference { id: 0, phantom: PhantomData }
+    }
+
+    pub fn get(&self, r: &redis::Client) -> Result<T, DecoderError> {
+        get(self.id, r)
+    }
+
+    pub fn set(&mut self, obj: &T) {
+        self.id = obj.id();
     }
 }

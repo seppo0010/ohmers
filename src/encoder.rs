@@ -3,6 +3,14 @@ use std::collections::HashMap;
 use msgpack;
 use redis;
 use rustc_serialize;
+use std::ascii::AsciiExt;
+
+#[derive(Debug, Clone, PartialEq)]
+enum EncoderStatus {
+    Normal,
+    Id,
+    Reference(String),
+}
 
 #[derive(Debug, Clone)]
 pub struct Encoder {
@@ -10,6 +18,7 @@ pub struct Encoder {
     pub id_field: String,
     pub features: HashMap<String, String>,
     pub attributes: Vec<String>,
+    status: EncoderStatus,
 }
 
 impl Encoder {
@@ -19,6 +28,7 @@ impl Encoder {
             id_field: "".to_string(),
             features: HashMap::new(),
             attributes: vec![],
+            status: EncoderStatus::Normal,
         }
     }
 }
@@ -26,6 +36,8 @@ impl Encoder {
 #[derive(Debug)]
 pub enum EncoderError {
     NotImplementedYet,
+    MissingField,
+    UnknownStruct(String),
     RedisError(redis::RedisError),
     MsgPackError(msgpack::encode::serialize::Error),
 }
@@ -46,17 +58,7 @@ pub type EncodeResult<T> = Result<T, EncoderError>;
 
 macro_rules! emit_fmt {
     ($enc: ident, $e: expr) => {{
-        let s = format!("{}", $e);
-        let len = $enc.attributes.len();
-        if len == 0 || $enc.attributes[len - 1] == "id" {
-            let value = s.clone();
-            if &*value != "0" {
-                $enc.features.insert("id".to_string(), value);
-            }
-            $enc.attributes.pop();
-        } else {
-            $enc.attributes.push(s);
-        }
+        $enc.attributes.push(format!("{}", $e));
         Ok(())
     }}
 }
@@ -69,7 +71,25 @@ impl rustc_serialize::Encoder for Encoder {
         Ok(())
     }
 
-    fn emit_usize(&mut self, v: usize) -> EncodeResult<()> { emit_fmt!(self, v) }
+    fn emit_usize(&mut self, v: usize) -> EncodeResult<()> {
+        let s = format!("{}", v);
+        match self.status {
+            EncoderStatus::Normal => self.attributes.push(s),
+            EncoderStatus::Id => {
+                if s != "0" {
+                    self.features.insert("id".to_string(), s);
+                }
+                self.attributes.pop();
+            }
+            EncoderStatus::Reference(ref field) => {
+                self.attributes.push(format!("{}_id", &*field.to_ascii_lowercase()));
+                self.attributes.push(s);
+            }
+        }
+        self.status = EncoderStatus::Normal;
+        Ok(())
+    }
+
     fn emit_u64(&mut self, v: u64) -> EncodeResult<()> { emit_fmt!(self, v) }
     fn emit_u32(&mut self, v: u32) -> EncodeResult<()> { emit_fmt!(self, v) }
     fn emit_u16(&mut self, v: u16) -> EncodeResult<()> { emit_fmt!(self, v) }
@@ -136,14 +156,26 @@ impl rustc_serialize::Encoder for Encoder {
     fn emit_struct<F>(&mut self, name: &str, _: usize, f: F) -> EncodeResult<()> where
         F: FnOnce(&mut Encoder) -> EncodeResult<()>,
     {
-        self.features.insert("name".to_string(), name.to_string());
-        f(self)
+        if self.features.contains_key("name") {
+            match name {
+                "Reference" => self.status = EncoderStatus::Reference(try!(self.attributes.pop().ok_or(EncoderError::MissingField))),
+                _ => return Err(EncoderError::UnknownStruct(name.to_string())),
+            }
+            f(self)
+        } else {
+            self.features.insert("name".to_string(), name.to_string());
+            f(self)
+        }
     }
 
     fn emit_struct_field<F>(&mut self, name: &str, _: usize, f: F) -> EncodeResult<()> where
         F: FnOnce(&mut Encoder) -> EncodeResult<()>,
     {
-        self.attributes.push(name.to_string());
+        if self.status == EncoderStatus::Normal && name == "id" {
+            self.status = EncoderStatus::Id;
+        } else {
+            self.attributes.push(name.to_string());
+        }
         f(self)
     }
 
