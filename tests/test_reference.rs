@@ -48,3 +48,57 @@ fn test_reference() {
     assert_eq!(person2.father.get(&client).unwrap(), father);
     assert_eq!(person2.mother.get(&client).unwrap(), mother);
 }
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+struct Location {
+    id: usize,
+    name: String,
+}
+impl Ohmer for Location {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+    fn defaults() -> Self {
+        Location {
+            id: 0,
+            name: "".to_string(),
+        }
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+struct Event {
+    id: usize,
+    name: String,
+    location: Reference<Location>
+}
+impl Ohmer for Event {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+    fn defaults() -> Self {
+        Event {
+            id: 0,
+            name: "".to_string(),
+            location: Reference::new(),
+        }
+    }
+}
+
+#[test]
+fn test_event_location() {
+    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+
+    let mut location = Location::defaults();
+    location.name = "House".to_string();
+    location.save(&client).unwrap();
+
+    let mut event = Event::defaults();
+    event.name = "Birthday Party".to_string();
+    event.location.set(&location);
+    assert_eq!(event.id, 0);
+    event.save(&client).unwrap();
+    assert!(event.id > 0);
+
+    let event2:Event = get(event.id, &client).unwrap();
+    assert_eq!(event2.name, "Birthday Party");
+    assert_eq!(event2.location.get(&client).unwrap().name, "House");
+}
