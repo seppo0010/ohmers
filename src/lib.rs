@@ -79,3 +79,43 @@ impl<T: Ohmer> Reference<T> {
         self.id = obj.id();
     }
 }
+
+#[derive(Debug, PartialEq)]
+pub enum OhmerError {
+    NotSaved,
+    RedisError(redis::RedisError),
+}
+
+impl From<redis::RedisError> for OhmerError {
+    fn from(e: redis::RedisError) -> OhmerError {
+        OhmerError::RedisError(e)
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+pub struct Counter;
+
+impl Counter {
+    fn get_key<T: Ohmer>(&self, obj: &T, prop: &str) -> Result<String, OhmerError> {
+        let class_name = obj.get_class_name();
+        let id = obj.id();
+        if id == 0 {
+            return Err(OhmerError::NotSaved);
+        }
+        Ok(format!("{}:{}:{}", class_name, id, prop))
+    }
+
+    pub fn incr<T: Ohmer>(&self, obj: &T, prop: &str, incr: i64, r: &redis::Client) -> Result<i64, OhmerError> {
+        let key = try!(self.get_key(obj, prop));
+        Ok(try!(r.incr(key, incr)))
+    }
+
+    pub fn get<T: Ohmer>(&self, obj: &T, prop: &str, r: &redis::Client) -> Result<i64, OhmerError> {
+        let key = try!(self.get_key(obj, prop));
+        let r:Option<i64> = try!(r.get(key));
+        match r {
+            Some(v) => Ok(v),
+            None => Ok(0),
+        }
+    }
+}
