@@ -6,6 +6,7 @@ extern crate stal;
 
 use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
+use std::mem::replace;
 use std::string::FromUtf8Error;
 
 use redis::Commands;
@@ -55,6 +56,15 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
     fn defaults() -> Self;
 
     fn unique_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
+    fn index_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
+
+    fn key_for_unique(&self, field: &str, value: &str) -> String {
+        format!("{}:uniques:{}:{}", self.get_class_name(), field, value)
+    }
+
+    fn key_for_index(&self, field: &str, value: &str) -> String {
+        format!("{}:indices:{}:{}", self.get_class_name(), field, value)
+    }
 
     fn get_class_name(&self) -> String {
         let mut encoder = Encoder::new();
@@ -77,7 +87,9 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
         try!(self.encode(&mut encoder));
 
         let mut unique_fields = self.unique_fields();
+        let mut index_fields = self.index_fields();
         let mut uniques = HashMap::new();
+        let mut indices = HashMap::new();
 
         for i in 0..(encoder.attributes.len() / 2) {
             let pos = i * 2;
@@ -85,16 +97,22 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
             if unique_fields.remove(&**key) {
                 uniques.insert(key.clone(), encoder.attributes[pos + 1].clone());
             }
+            if index_fields.remove(&**key) {
+                indices.insert(key.clone(), vec![encoder.attributes[pos + 1].clone()]);
+            }
         }
         if unique_fields.len() > 0 {
             return Err(OhmerError::UnknownIndex(unique_fields.iter().next().unwrap().to_string()));
+        }
+        if index_fields.len() > 0 {
+            return Err(OhmerError::UnknownIndex(index_fields.iter().next().unwrap().to_string()));
         }
 
         let script = redis::Script::new(SAVE);
         let result = script
                 .arg(try!(msgpack_encode(&encoder.features)))
                 .arg(try!(msgpack_encode(&encoder.attributes.iter().map(|x| &*x).collect::<Vec<_>>())))
-                .arg(try!(msgpack_encode(&Vec::new() as &Vec<u8>)))
+                .arg(try!(msgpack_encode(&indices)))
                 .arg(try!(msgpack_encode(&uniques)))
                 .invoke(&try!(r.get_connection()));
         let id = match result {
@@ -221,6 +239,47 @@ impl<'a, T: Ohmer> Query<'a, T> {
         Query { set: set, phantom: PhantomData, r: r }
     }
 
+    fn key(field: &str, value: &str) -> Set {
+        Set::Key(T::defaults().key_for_index(field, value).as_bytes().to_vec())
+    }
+
+    pub fn find(field: &str, value: &str, r: &'a redis::Client) -> Self {
+        Query { set: Query::<T>::key(field, value), phantom: PhantomData, r: r }
+    }
+
+    pub fn inter(&mut self, field: &str, value: &str) -> &mut Self {
+        self.sinter(vec![Query::<T>::key(field, value)]);
+        self
+    }
+
+    pub fn sinter(&mut self, mut sets: Vec<Set>) {
+        let set = replace(&mut self.set, Set::Key(vec![]));
+        sets.push(set);
+        self.set = Set::Inter(sets);
+    }
+
+    pub fn union(&mut self, field: &str, value: &str) -> &mut Self {
+        self.sunion(vec![Query::<T>::key(field, value)]);
+        self
+    }
+
+    pub fn sunion(&mut self, mut sets: Vec<Set>) {
+        let set = replace(&mut self.set, Set::Key(vec![]));
+        sets.push(set);
+        self.set = Set::Union(sets);
+    }
+
+    pub fn diff(&mut self, field: &str, value: &str) -> &mut Self {
+        self.sdiff(vec![Query::<T>::key(field, value)]);
+        self
+    }
+
+    pub fn sdiff(&mut self, mut sets: Vec<Set>) {
+        let set = replace(&mut self.set, Set::Key(vec![]));
+        sets.insert(0, set);
+        self.set = Set::Diff(sets);
+    }
+
     pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {
         Iter::new(self.set.ids().solve(), self.r)
     }
@@ -271,7 +330,7 @@ impl<'a, T: Ohmer> Iterator for Iter<'a, T> {
         match self.iter.next() {
             Some(id) => match get(id, self.r) {
                 Ok(v) => Some(v),
-                Err(_) => None,
+                Err(e) => { println!("AAA {:?}", e); None},
             },
             None => None,
         }
