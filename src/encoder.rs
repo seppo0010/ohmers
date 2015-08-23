@@ -251,7 +251,7 @@ impl rustc_serialize::Encoder for Encoder {
     }
 }
 
-pub fn msgpack_encode<T: rustc_serialize::Encodable>(t: &T) -> Result<Vec<u8>, msgpack::encode::serialize::Error> {
+pub fn msgpack_encode<T: rustc_serialize::Encodable>(t: &T) -> Result<Vec<u8>, EncoderError> {
     let mut buf = Vec::new();
     try!(t.encode(&mut msgpack::Encoder::new(&mut buf)));
     Ok(buf)

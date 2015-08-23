@@ -2,7 +2,7 @@
 extern crate redis;
 extern crate rustc_serialize;
 
- use ohmers::{Ohmer, Counter, OhmerError};
+ use ohmers::{Ohmer, Counter};
 use rustc_serialize::Encodable;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
@@ -28,7 +28,7 @@ impl Ohmer for Candidate {
 fn test_counter() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
     let mut candidate = Candidate::defaults();
-    assert_eq!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).unwrap_err(), OhmerError::NotSaved);
+    assert!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).is_err());
     candidate.save(&client).unwrap();
     assert_eq!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).unwrap(), 1);
     assert_eq!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).unwrap(), 2);

@@ -2,7 +2,7 @@ extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
 
-use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
 
 use redis::Commands;
@@ -29,6 +29,8 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
 
     fn defaults() -> Self;
 
+    fn unique_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
+
     fn get_class_name(&self) -> String {
         let mut encoder = Encoder::new();
         self.encode(&mut encoder).unwrap();
@@ -44,16 +46,31 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
         Ok(())
     }
 
-    fn save(&mut self, r: &redis::Client) -> Result<(), EncoderError>{
+    fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError>{
         let mut encoder = Encoder::new();
         encoder.id_field = self.id_field();
         try!(self.encode(&mut encoder));
+
+        let mut unique_fields = self.unique_fields();
+        let mut uniques = HashMap::new();
+
+        for i in 0..(encoder.attributes.len() / 2) {
+            let pos = i * 2;
+            let key = &encoder.attributes[pos];
+            if unique_fields.remove(&**key) {
+                uniques.insert(key.clone(), encoder.attributes[pos + 1].clone());
+            }
+        }
+        if unique_fields.len() > 0 {
+            return Err(OhmerError::UnknownIndex(unique_fields.iter().next().unwrap().to_string()));
+        }
+
         let script = redis::Script::new(SAVE);
         let id = try!(script
                 .arg(try!(msgpack_encode(&encoder.features)))
                 .arg(try!(msgpack_encode(&encoder.attributes.iter().map(|x| &*x).collect::<Vec<_>>())))
                 .arg(try!(msgpack_encode(&Vec::new() as &Vec<u8>)))
-                .arg(try!(msgpack_encode(&Vec::new() as &Vec<u8>)))
+                .arg(try!(msgpack_encode(&uniques)))
                 .invoke(&try!(r.get_connection())));
         self.set_id(id);
         Ok(())
@@ -80,15 +97,23 @@ impl<T: Ohmer> Reference<T> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum OhmerError {
     NotSaved,
     RedisError(redis::RedisError),
+    EncoderError(EncoderError),
+    UnknownIndex(String),
 }
 
 impl From<redis::RedisError> for OhmerError {
     fn from(e: redis::RedisError) -> OhmerError {
         OhmerError::RedisError(e)
+    }
+}
+
+impl From<EncoderError> for OhmerError {
+    fn from(e: EncoderError) -> OhmerError {
+        OhmerError::EncoderError(e)
     }
 }
 
