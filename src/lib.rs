@@ -2,13 +2,16 @@ extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
 extern crate regex;
+extern crate stal;
 
 use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
+use std::string::FromUtf8Error;
 
 use redis::Commands;
 use redis::ToRedisArgs;
 use regex::Regex;
+use stal::Set;
 
 mod encoder;
 use encoder::*;
@@ -36,6 +39,12 @@ pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
     let mut obj = T::defaults();
     try!(obj.load(id, r));
     Ok(obj)
+}
+
+pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
+    let class_name = T::defaults().get_class_name();
+    let query = Query::<'a, T>::new(Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r);
+    Ok(try!(query.try_iter()))
 }
 
 pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Sized {
@@ -131,6 +140,13 @@ pub enum OhmerError {
     EncoderError(EncoderError),
     UnknownIndex(String),
     UniqueIndexViolation(String),
+    CommandError(Vec<u8>),
+}
+
+impl From<FromUtf8Error> for OhmerError {
+    fn from(err: FromUtf8Error) -> OhmerError {
+        OhmerError::CommandError(err.into_bytes())
+    }
 }
 
 impl From<redis::RedisError> for OhmerError {
@@ -192,4 +208,76 @@ macro_rules! decr {
     ($obj: expr, $prop: ident, $client: expr) => {{
         incrby!($obj, $prop, -1, $client)
     }}
+}
+
+pub struct Query<'a, T: 'a + Ohmer> {
+    set: Set,
+    r: &'a redis::Client,
+    phantom: PhantomData<T>,
+}
+
+impl<'a, T: Ohmer> Query<'a, T> {
+    fn new(set: Set, r: &'a redis::Client) -> Self {
+        Query { set: set, phantom: PhantomData, r: r }
+    }
+
+    pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {
+        Iter::new(self.set.ids().solve(), self.r)
+    }
+}
+
+pub struct Iter<'a, T> {
+    r: &'a redis::Client,
+    iter: std::vec::IntoIter<usize>,
+    phantom: PhantomData<T>,
+}
+
+impl<'a, T: Ohmer> Iter<'a, T> {
+    fn new(ops: (Vec<Vec<Vec<u8>>>, usize), r: &'a redis::Client) -> Result<Self, OhmerError> {
+        let mut q = redis::pipe();
+        q.atomic();
+        let mut i = 0;
+        let len = ops.0.len();
+
+        for op in ops.0.into_iter() {
+            if i == 0 || i == len - 1 {
+                i += 1;
+                // skip MULTI and EXEC
+                continue;
+            }
+            let mut first = true;
+            for arg in op {
+                if first {
+                    q.cmd(&*try!(String::from_utf8(arg)));
+                    first = false;
+                } else {
+                    q.arg(arg);
+                }
+                if i != ops.1 {
+                    q.ignore();
+                }
+            }
+            i += 1;
+        }
+        let mut result:Vec<Vec<usize>> = try!(q.query(r));
+        Ok(Iter { iter: result.pop().unwrap().into_iter(), r: r, phantom: PhantomData })
+    }
+}
+
+impl<'a, T: Ohmer> Iterator for Iter<'a, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        match self.iter.next() {
+            Some(id) => match get(id, self.r) {
+                Ok(v) => Some(v),
+                Err(_) => None,
+            },
+            None => None,
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.iter.len(), Some(self.iter.len()))
+    }
 }
