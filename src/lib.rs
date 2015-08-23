@@ -119,3 +119,24 @@ impl Counter {
         }
     }
 }
+
+#[macro_export]
+macro_rules! incrby {
+    ($obj: expr, $prop: ident, $incr: expr, $client: expr) => {{
+        $obj.$prop.incr(&$obj, stringify!($prop), $incr, $client)
+    }}
+}
+
+#[macro_export]
+macro_rules! incr {
+    ($obj: expr, $prop: ident, $client: expr) => {{
+        incrby!($obj, $prop, 1, $client)
+    }}
+}
+
+#[macro_export]
+macro_rules! decr {
+    ($obj: expr, $prop: ident, $client: expr) => {{
+        incrby!($obj, $prop, -1, $client)
+    }}
+}
