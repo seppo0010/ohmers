@@ -7,6 +7,7 @@ use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
 
 use redis::Commands;
+use redis::ToRedisArgs;
 use regex::Regex;
 
 mod encoder;
@@ -17,6 +18,19 @@ use decoder::*;
 
 mod save;
 use save::SAVE;
+
+pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
+    let mut obj = T::defaults();
+
+    let opt_id:Option<usize> = try!(r.hget(format!("{}:uniques:{}", obj.get_class_name(), property), value));
+
+    let id = match opt_id {
+        Some(id) => id,
+        None => return Ok(None),
+    };
+    try!(obj.load(id, r));
+    Ok(Some(obj))
+}
 
 pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
     let mut obj = T::defaults();
