@@ -12,7 +12,6 @@ use std::string::FromUtf8Error;
 use redis::Commands;
 use redis::ToRedisArgs;
 use regex::Regex;
-use stal::Set;
 
 mod encoder;
 use encoder::*;
@@ -44,7 +43,7 @@ pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
 
 pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
     let class_name = T::defaults().get_class_name();
-    let query = Query::<'a, T>::new(Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r);
+    let query = Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r);
     Ok(try!(query.try_iter()))
 }
 
@@ -151,6 +150,43 @@ impl<T: Ohmer> Reference<T> {
     }
 }
 
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+pub struct Set<T: Ohmer> {
+    phantom: PhantomData<T>,
+}
+
+impl<T: Ohmer> Set<T> {
+    pub fn new() -> Self {
+        Set { phantom: PhantomData }
+    }
+
+    fn key_name<P: Ohmer>(&self, property: &str, parent: &P) -> Result<String, OhmerError> {
+        let id = parent.id();
+        if id == 0 {
+            Err(OhmerError::NotSaved)
+        } else {
+            Ok(format!("{}:{}:{}", parent.get_class_name(), property, parent.id()))
+        }
+    }
+
+    pub fn key<P: Ohmer>(&self, property: &str, parent: &P) -> Result<stal::Set, OhmerError> {
+        Ok(stal::Set::Key(try!(self.key_name(property, parent)).as_bytes().to_vec()))
+    }
+
+    pub fn query<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Result<Query<T>, OhmerError> {
+        let key = try!(self.key(property, parent));
+        Ok(Query::new(key, r))
+    }
+
+    pub fn insert<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
+        Ok(try!(r.sadd(try!(self.key_name(property, parent)), obj.id())))
+    }
+
+    pub fn remove<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
+        Ok(try!(r.srem(try!(self.key_name(property, parent)), obj.id())))
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub enum OhmerError {
     NotSaved,
@@ -229,18 +265,18 @@ macro_rules! decr {
 }
 
 pub struct Query<'a, T: 'a + Ohmer> {
-    set: Set,
+    set: stal::Set,
     r: &'a redis::Client,
     phantom: PhantomData<T>,
 }
 
 impl<'a, T: Ohmer> Query<'a, T> {
-    fn new(set: Set, r: &'a redis::Client) -> Self {
+    fn new(set: stal::Set, r: &'a redis::Client) -> Self {
         Query { set: set, phantom: PhantomData, r: r }
     }
 
-    fn key(field: &str, value: &str) -> Set {
-        Set::Key(T::defaults().key_for_index(field, value).as_bytes().to_vec())
+    fn key(field: &str, value: &str) -> stal::Set {
+        stal::Set::Key(T::defaults().key_for_index(field, value).as_bytes().to_vec())
     }
 
     pub fn find(field: &str, value: &str, r: &'a redis::Client) -> Self {
@@ -252,10 +288,10 @@ impl<'a, T: Ohmer> Query<'a, T> {
         self
     }
 
-    pub fn sinter(&mut self, mut sets: Vec<Set>) {
-        let set = replace(&mut self.set, Set::Key(vec![]));
+    pub fn sinter(&mut self, mut sets: Vec<stal::Set>) {
+        let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.push(set);
-        self.set = Set::Inter(sets);
+        self.set = stal::Set::Inter(sets);
     }
 
     pub fn union(&mut self, field: &str, value: &str) -> &mut Self {
@@ -263,10 +299,10 @@ impl<'a, T: Ohmer> Query<'a, T> {
         self
     }
 
-    pub fn sunion(&mut self, mut sets: Vec<Set>) {
-        let set = replace(&mut self.set, Set::Key(vec![]));
+    pub fn sunion(&mut self, mut sets: Vec<stal::Set>) {
+        let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.push(set);
-        self.set = Set::Union(sets);
+        self.set = stal::Set::Union(sets);
     }
 
     pub fn diff(&mut self, field: &str, value: &str) -> &mut Self {
@@ -274,10 +310,10 @@ impl<'a, T: Ohmer> Query<'a, T> {
         self
     }
 
-    pub fn sdiff(&mut self, mut sets: Vec<Set>) {
-        let set = replace(&mut self.set, Set::Key(vec![]));
+    pub fn sdiff(&mut self, mut sets: Vec<stal::Set>) {
+        let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.insert(0, set);
-        self.set = Set::Diff(sets);
+        self.set = stal::Set::Diff(sets);
     }
 
     pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {

@@ -161,6 +161,7 @@ impl rustc_serialize::Encoder for Encoder {
             match name {
                 "Reference" => self.status = EncoderStatus::Reference(try!(self.attributes.pop().ok_or(EncoderError::MissingField))),
                 "Counter" => { try!(self.attributes.pop().ok_or(EncoderError::MissingField)); },
+                "Set" => { try!(self.attributes.pop().ok_or(EncoderError::MissingField)); },
                 _ => return Err(EncoderError::UnknownStruct(name.to_string())),
             }
             f(self)
