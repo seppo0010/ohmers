@@ -5,21 +5,21 @@ extern crate rustc_serialize;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use ohmers::{Ohmer};
+use ohmers::{Ohmer, OhmerError};
 use redis::Commands;
 use rustc_serialize::Encodable;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
-struct Person {
+struct Thing {
     id: usize,
     name: String,
 }
 
-impl Ohmer for Person {
+impl Ohmer for Thing {
     fn id(&self) -> usize { self.id }
     fn set_id(&mut self, id: usize) { self.id = id; }
     fn defaults() -> Self {
-        Person {
+        Thing {
             id: 0,
             name: "".to_string(),
         }
@@ -30,9 +30,12 @@ impl Ohmer for Person {
 #[test]
 fn test_find() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let oldlen:usize = client.hlen("Person:uniques:name").unwrap();
-    let mut person = Person { id: 0, name: "Jane".to_string() };
+    let _:() = client.del("Thing:uniques:name").unwrap();
+    let mut person = Thing { id: 0, name: "Jane".to_string() };
     person.save(&client).unwrap();
-    let len:usize = client.hlen("Person:uniques:name").unwrap();
-    assert_eq!(oldlen + 1, len);
+    let len:usize = client.hlen("Thing:uniques:name").unwrap();
+    assert_eq!(1, len);
+
+    let mut person2 = Thing { id: 0, name: "Jane".to_string() };
+    assert_eq!(person2.save(&client).unwrap_err(), OhmerError::UniqueIndexViolation("name".to_string()));
 }

@@ -1,11 +1,13 @@
 extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
+extern crate regex;
 
 use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
 
 use redis::Commands;
+use regex::Regex;
 
 mod encoder;
 use encoder::*;
@@ -66,12 +68,23 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
         }
 
         let script = redis::Script::new(SAVE);
-        let id = try!(script
+        let result = script
                 .arg(try!(msgpack_encode(&encoder.features)))
                 .arg(try!(msgpack_encode(&encoder.attributes.iter().map(|x| &*x).collect::<Vec<_>>())))
                 .arg(try!(msgpack_encode(&Vec::new() as &Vec<u8>)))
                 .arg(try!(msgpack_encode(&uniques)))
-                .invoke(&try!(r.get_connection())));
+                .invoke(&try!(r.get_connection()));
+        let id = match result {
+            Ok(id) => id,
+            Err(e) => {
+                let re = Regex::new(r"UniqueIndexViolation: (\w+)").unwrap();
+                let s = format!("{}", e);
+                match re.find(&*s) {
+                    Some((start, stop)) => return Err(OhmerError::UniqueIndexViolation(s[start + 22..stop].to_string())),
+                    None => return Err(OhmerError::RedisError(e)),
+                }
+            },
+        };
         self.set_id(id);
         Ok(())
     }
@@ -97,12 +110,13 @@ impl<T: Ohmer> Reference<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum OhmerError {
     NotSaved,
     RedisError(redis::RedisError),
     EncoderError(EncoderError),
     UnknownIndex(String),
+    UniqueIndexViolation(String),
 }
 
 impl From<redis::RedisError> for OhmerError {

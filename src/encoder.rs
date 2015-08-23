@@ -33,13 +33,13 @@ impl Encoder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum EncoderError {
     NotImplementedYet,
     MissingField,
     UnknownStruct(String),
     RedisError(redis::RedisError),
-    MsgPackError(msgpack::encode::serialize::Error),
+    MsgPackError,
 }
 
 impl From<redis::RedisError> for EncoderError {
@@ -49,8 +49,8 @@ impl From<redis::RedisError> for EncoderError {
 }
 
 impl From<msgpack::encode::serialize::Error> for EncoderError {
-    fn from(e: msgpack::encode::serialize::Error) -> EncoderError {
-        EncoderError::MsgPackError(e)
+    fn from(_: msgpack::encode::serialize::Error) -> EncoderError {
+        EncoderError::MsgPackError
     }
 }
 
