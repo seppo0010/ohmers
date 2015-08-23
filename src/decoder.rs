@@ -91,17 +91,21 @@ impl rustc_serialize::Decoder for Decoder {
     read_primitive! { read_i16, i16 }
     read_primitive! { read_i32, i32 }
     read_primitive! { read_i64, i64 }
-
-    fn read_f32(&mut self) -> DecodeResult<f32> {
-        Err(DecoderError::NotImplementedYet)
-    }
-
-    fn read_f64(&mut self) -> DecodeResult<f64> {
-        Err(DecoderError::NotImplementedYet)
-    }
+    read_primitive! { read_f32, f32 }
+    read_primitive! { read_f64, f64 }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
-        Err(DecoderError::NotImplementedYet)
+        match self.stack.pop() {
+            Some(opt_s) => match opt_s {
+                Some(s) => match &*s {
+                    "0" => Ok(false),
+                    "1" => Ok(true),
+                    _ => Err(DecoderError::ExpectedError("Boolean".to_string(), s)),
+                },
+                None => Err(DecoderError::ExpectedError("Boolean".to_string(), "None".to_string()))
+            },
+            None => Err(DecoderError::ExpectedError("Boolean".to_string(), "Not found".to_string()))
+        }
     }
 
     fn read_char(&mut self) -> DecodeResult<char> {
