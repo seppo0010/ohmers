@@ -61,10 +61,16 @@ fn test_set() {
     assert!(!team.players.insert("players", &team, &p1, &client).unwrap());
     assert!(team.players.insert("players", &team, &p2, &client).unwrap());
     assert!(!team.players.insert("players", &team, &p2, &client).unwrap());
+
+    assert!(team.players.contains("players", &team, &p1, &client).unwrap());
+    assert!(team.players.contains("players", &team, &p2, &client).unwrap());
     assert_eq!(team.players.len("players", &team, &client).unwrap(), 2);
 
     assert!(team.players.remove("players", &team, &p2, &client).unwrap());
     assert!(!team.players.remove("players", &team, &p2, &client).unwrap());
+
+    assert!(team.players.contains("players", &team, &p1, &client).unwrap());
+    assert!(!team.players.contains("players", &team, &p2, &client).unwrap());
 
     let players = team.players.query("players", &team, &client).unwrap().try_iter().unwrap().collect::<Vec<_>>();
     assert_eq!(players, vec![p1]);
