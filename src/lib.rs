@@ -185,6 +185,10 @@ impl<T: Ohmer> Set<T> {
     pub fn remove<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
         Ok(try!(r.srem(try!(self.key_name(property, parent)), obj.id())))
     }
+
+    pub fn len<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<usize, OhmerError> {
+        Ok(try!(r.scard(try!(self.key_name(property, parent)))))
+    }
 }
 
 #[derive(PartialEq, Debug)]
