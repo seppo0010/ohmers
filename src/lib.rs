@@ -25,9 +25,30 @@ use save::SAVE;
 #[macro_export]
 macro_rules! model {
     ($class: ident { $($key: ident:$proptype: ty = $default: expr);*; }) => {
-        model!($class { uniques { }; $($key:$proptype = $default;)* });
+        model!($class { uniques { }; indices { }; $($key:$proptype = $default;)* });
     };
-    ($class: ident { uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* }; $($key: ident:$proptype: ty = $default: expr;)* }) => {
+    ($class: ident {
+     uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
+        model!($class { uniques {
+                $(
+                    $ukey: $uproptype = $udefault;
+                )*
+                }; indices { }; $($key:$proptype = $default;)* });
+    };
+    ($class: ident {
+     indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
+        model!($class { uniques { }; indices {
+                $(
+                    $ikey: $iproptype = $idefault;
+                )*
+                }; $($key:$proptype = $default;)* });
+    };
+    ($class: ident {
+     uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
+     indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
         #[derive(RustcEncodable, RustcDecodable, Debug)]
         struct $class {
             id: usize,
@@ -36,6 +57,9 @@ macro_rules! model {
             )*
             $(
                 $ukey: $uproptype,
+            )*
+            $(
+                $ikey: $iproptype,
             )*
         }
 
@@ -48,6 +72,9 @@ macro_rules! model {
                     )*
                     $(
                         $ukey: $udefault,
+                    )*
+                    $(
+                        $ikey: $idefault,
                     )*
                 }
             }
@@ -75,6 +102,14 @@ macro_rules! model {
                 HashSet::from_iter(vec![
                         $(
                             stringify!($ukey),
+                        )*
+                    ])
+            }
+
+            fn index_fields<'a>(&self) -> HashSet<&'a str> {
+                HashSet::from_iter(vec![
+                        $(
+                            stringify!($ikey),
                         )*
                     ])
             }
