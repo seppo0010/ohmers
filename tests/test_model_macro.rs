@@ -7,7 +7,7 @@ use rustc_serialize::Encodable;
 
 model!(Person,
         name:String = "".to_owned(),
-        age:u8 = 18
+        age:u8 = 18,
       );
 
 #[test]

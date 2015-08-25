@@ -24,7 +24,7 @@ use save::SAVE;
 
 #[macro_export]
 macro_rules! model {
-    ($class: ident, $($key: ident:$proptype: ty = $default: expr),* ) => {
+    ($class: ident, $($key: ident:$proptype: ty = $default: expr),*,) => {
         #[derive(RustcEncodable, RustcDecodable, Debug)]
         struct $class {
             id: usize,
