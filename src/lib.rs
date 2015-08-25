@@ -25,11 +25,17 @@ use save::SAVE;
 #[macro_export]
 macro_rules! model {
     ($class: ident, $($key: ident:$proptype: ty = $default: expr),*,) => {
+        model!($class, uniques { }, $($key:$proptype = $default,)*);
+    };
+    ($class: ident, uniques { $($ukey: ident:$uproptype: ty = $udefault: expr),* }, $($key: ident:$proptype: ty = $default: expr),*,) => {
         #[derive(RustcEncodable, RustcDecodable, Debug)]
         struct $class {
             id: usize,
             $(
                 $key: $proptype,
+            )*
+            $(
+                $ukey: $uproptype,
             )*
         }
 
@@ -39,6 +45,9 @@ macro_rules! model {
                     id: 0,
                     $(
                         $key: $default,
+                    )*
+                    $(
+                        $ukey: $udefault,
                     )*
                 }
             }
@@ -60,6 +69,14 @@ macro_rules! model {
 
             fn key_for_index(&self, field: &str, value: &str) -> String {
                 format!("{}:indices:{}:{}", stringify!($class), field, value)
+            }
+
+            fn unique_fields<'a>(&self) -> HashSet<&'a str> {
+                HashSet::from_iter(vec![
+                        $(
+                            stringify!($ukey),
+                        )*
+                    ])
             }
         }
 
