@@ -6,8 +6,8 @@ use ohmers::{get, Ohmer};
 use rustc_serialize::Encodable;
 
 model!(Person,
-        name => (String, "".to_owned()),
-        age => (u8, 18)
+        name:String = "".to_owned(),
+        age:u8 = 18
       );
 
 #[test]
