@@ -87,5 +87,10 @@ fn test_iter_find() {
 
     let cats = Query::<Cat>::find("age", "2", &client).diff("is_male", "0")
         .try_iter().unwrap().collect::<HashSet<_>>();
+    assert_eq!(HashSet::from_iter(vec![mozart.clone()].into_iter()), cats);
+
+    let mut query = Query::<Cat>::find("age", "2", &client);
+    query.diff("is_male", "0");
+    let cats = query.try_into_iter().unwrap().collect::<HashSet<_>>();
     assert_eq!(HashSet::from_iter(vec![mozart].into_iter()), cats);
 }

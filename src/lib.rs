@@ -327,6 +327,10 @@ impl<'a, T: Ohmer> Query<'a, T> {
     pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {
         Iter::new(self.set.ids().solve(), self.r)
     }
+
+    pub fn try_into_iter(self) -> Result<Iter<'a, T>, OhmerError> {
+        Iter::new(self.set.into_ids().solve(), self.r)
+    }
 }
 
 pub struct Iter<'a, T> {
