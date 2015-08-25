@@ -6,12 +6,13 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 
 use ohmers::{get, Ohmer};
+use redis::Commands;
 use rustc_serialize::Encodable;
 
-model!(Person,
-        name:String = "".to_owned(),
-        age:u8 = 18,
-      );
+model!(Person {
+        name:String = "".to_owned();
+        age:u8 = 18;
+        });
 
 #[test]
 fn test_model_macro() {
@@ -27,14 +28,15 @@ fn test_model_macro() {
     assert_eq!(get::<Person>(person.id, &client).unwrap(), person);
 }
 
-model!(UPerson,
-        uniques { name:String = "".to_owned() },
-        age:u8 = 18,
-        );
+model!(UPerson {
+        uniques { name:String = "".to_owned(); };
+        age:u8 = 18;
+        });
 
 #[test]
 fn test_model_unique_macro() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let _:() = client.del("UPerson:uniques:name").unwrap();
 
     let mut person = UPerson::default();
     assert_eq!(person.id, 0);

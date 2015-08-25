@@ -24,10 +24,10 @@ use save::SAVE;
 
 #[macro_export]
 macro_rules! model {
-    ($class: ident, $($key: ident:$proptype: ty = $default: expr),*,) => {
-        model!($class, uniques { }, $($key:$proptype = $default,)*);
+    ($class: ident { $($key: ident:$proptype: ty = $default: expr);*; }) => {
+        model!($class { uniques { }; $($key:$proptype = $default;)* });
     };
-    ($class: ident, uniques { $($ukey: ident:$uproptype: ty = $udefault: expr),* }, $($key: ident:$proptype: ty = $default: expr),*,) => {
+    ($class: ident { uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* }; $($key: ident:$proptype: ty = $default: expr;)* }) => {
         #[derive(RustcEncodable, RustcDecodable, Debug)]
         struct $class {
             id: usize,
