@@ -12,10 +12,8 @@ struct Candidate {
     negative_votes: Counter,
 }
 
-impl Ohmer for Candidate {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Candidate {
+    fn default() -> Self {
         Candidate {
             id: 0,
             positive_votes: Counter,
@@ -23,11 +21,15 @@ impl Ohmer for Candidate {
         }
     }
 }
+impl Ohmer for Candidate {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
 
 #[test]
 fn test_counter() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut candidate = Candidate::defaults();
+    let mut candidate = Candidate::default();
     assert!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).is_err());
     candidate.save(&client).unwrap();
     assert_eq!(candidate.positive_votes.incr(&candidate, "positive_votes", 1, &client).unwrap(), 1);

@@ -12,16 +12,18 @@ struct Team {
     players: Set<Player>,
 }
 
-impl Ohmer for Team {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Team {
+    fn default() -> Self {
         Team {
             id: 0,
             name: "".to_string(),
             players: Set::new(),
         }
     }
+}
+impl Ohmer for Team {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 }
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
@@ -30,30 +32,32 @@ struct Player {
     name: String,
 }
 
-impl Ohmer for Player {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Player {
+    fn default() -> Self {
         Player {
             id: 0,
             name: "".to_string(),
         }
     }
 }
+impl Ohmer for Player {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
 
 #[test]
 fn test_set() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
 
-    let mut p1 = Player::defaults();
+    let mut p1 = Player::default();
     p1.name = "Alice".to_string();
     p1.save(&client).unwrap();
 
-    let mut p2 = Player::defaults();
+    let mut p2 = Player::default();
     p2.name = "Bob".to_string();
     p2.save(&client).unwrap();
 
-    let mut team = Team::defaults();
+    let mut team = Team::default();
     team.name = "foo".to_string();
     team.save(&client).unwrap();
 

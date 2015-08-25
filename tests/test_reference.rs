@@ -12,10 +12,8 @@ struct Person {
     father: Reference<Person>,
     mother: Reference<Person>,
 }
-impl Ohmer for Person {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Person {
+    fn default() -> Self {
         Person {
             id: 0,
             name: "".to_string(),
@@ -24,20 +22,24 @@ impl Ohmer for Person {
         }
     }
 }
+impl Ohmer for Person {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
 
 #[test]
 fn test_reference() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
 
-    let mut father = Person::defaults();
+    let mut father = Person::default();
     father.name = "John".to_string();
     father.save(&client).unwrap();
 
-    let mut mother = Person::defaults();
+    let mut mother = Person::default();
     mother.name = "Jane".to_string();
     mother.save(&client).unwrap();
 
-    let mut person = Person::defaults();
+    let mut person = Person::default();
     person.name = "Alice".to_string();
     person.father.set(&father);
     person.mother.set(&mother);
@@ -54,15 +56,17 @@ struct Location {
     id: usize,
     name: String,
 }
-impl Ohmer for Location {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Location {
+    fn default() -> Self {
         Location {
             id: 0,
             name: "".to_string(),
         }
     }
+}
+impl Ohmer for Location {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 }
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
@@ -71,10 +75,8 @@ struct Event {
     name: String,
     location: Reference<Location>
 }
-impl Ohmer for Event {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Event {
+    fn default() -> Self {
         Event {
             id: 0,
             name: "".to_string(),
@@ -82,16 +84,20 @@ impl Ohmer for Event {
         }
     }
 }
+impl Ohmer for Event {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
 
 #[test]
 fn test_event_location() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
 
-    let mut location = Location::defaults();
+    let mut location = Location::default();
     location.name = "House".to_string();
     location.save(&client).unwrap();
 
-    let mut event = Event::defaults();
+    let mut event = Event::default();
     event.name = "Birthday Party".to_string();
     event.location.set(&location);
     assert_eq!(event.id, 0);

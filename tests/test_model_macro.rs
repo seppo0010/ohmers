@@ -14,7 +14,7 @@ model!(Person,
 fn test_model_macro() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
 
-    let mut person = Person::defaults();
+    let mut person = Person::default();
     assert_eq!(person.id, 0);
     assert_eq!(person.name, "".to_owned());
     assert_eq!(person.age, 18);

@@ -15,15 +15,17 @@ struct Thing {
     name: String,
 }
 
-impl Ohmer for Thing {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Thing {
+    fn default() -> Self {
         Thing {
             id: 0,
             name: "".to_string(),
         }
     }
+}
+impl Ohmer for Thing {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
     fn unique_fields<'a>(&self) -> HashSet<&'a str> { HashSet::from_iter(vec!["name"]) }
 }
 

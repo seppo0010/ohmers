@@ -10,15 +10,17 @@ struct Person {
     id: usize,
     name: String,
 }
-impl Ohmer for Person {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Person {
+    fn default() -> Self {
         Person {
             id: 0,
             name: "".to_string(),
         }
     }
+}
+impl Ohmer for Person {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 }
 
 #[test]

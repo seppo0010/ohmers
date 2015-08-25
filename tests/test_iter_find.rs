@@ -17,10 +17,8 @@ struct Cat {
     age: u8,
 }
 
-impl Ohmer for Cat {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Cat {
+    fn default() -> Self {
         Cat {
             id: 0,
             name: "".to_string(),
@@ -28,6 +26,10 @@ impl Ohmer for Cat {
             age: 0,
         }
     }
+}
+impl Ohmer for Cat {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 
     fn index_fields<'a>(&self) -> HashSet<&'a str> {
         HashSet::from_iter(vec!["age", "is_male"].into_iter())
@@ -50,25 +52,25 @@ fn test_iter_find() {
             0
             );
 
-    let mut indiana = Cat::defaults();
+    let mut indiana = Cat::default();
     indiana.name = "Indiana".to_string();
     indiana.is_male = true;
     indiana.age = 7;
     indiana.save(&client).unwrap();
 
-    let mut merry = Cat::defaults();
+    let mut merry = Cat::default();
     merry.name = "Merry".to_string();
     merry.is_male = false;
     merry.age = 3;
     merry.save(&client).unwrap();
 
-    let mut mozart = Cat::defaults();
+    let mut mozart = Cat::default();
     mozart.name = "Mozart".to_string();
     mozart.is_male = true;
     mozart.age = 2;
     mozart.save(&client).unwrap();
 
-    let mut dorothy = Cat::defaults();
+    let mut dorothy = Cat::default();
     dorothy.name = "Dorothy".to_string();
     dorothy.is_male = false;
     dorothy.age = 2;

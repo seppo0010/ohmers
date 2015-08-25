@@ -12,10 +12,8 @@ struct Person {
     father_name: Option<String>,
 }
 
-impl Ohmer for Person {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Person {
+    fn default() -> Self {
         Person {
             id: 0,
             name: "".to_string(),
@@ -23,11 +21,15 @@ impl Ohmer for Person {
         }
     }
 }
+impl Ohmer for Person {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
 
 #[test]
 fn test_option_some() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut person = Person::defaults();
+    let mut person = Person::default();
     person.name = "Alice".to_string();
     person.father_name = Some("Bob".to_string());
     person.save(&client).unwrap();
@@ -39,7 +41,7 @@ fn test_option_some() {
 #[test]
 fn test_option_none() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut person = Person::defaults();
+    let mut person = Person::default();
     person.name = "Alice".to_string();
     person.save(&client).unwrap();
 

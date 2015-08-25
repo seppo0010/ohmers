@@ -14,15 +14,17 @@ struct Car {
     id: usize,
     name: String,
 }
-impl Ohmer for Car {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Car {
+    fn default() -> Self {
         Car {
             id: 0,
             name: "".to_string(),
         }
     }
+}
+impl Ohmer for Car {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 }
 
 #[test]
@@ -36,11 +38,11 @@ fn test_iter_all() {
             0
             );
 
-    let mut toyota = Car::defaults();
+    let mut toyota = Car::default();
     toyota.name = "Toyota".to_string();
     toyota.save(&client).unwrap();
 
-    let mut mercedes = Car::defaults();
+    let mut mercedes = Car::default();
     mercedes.name = "Mercedes".to_string();
     mercedes.save(&client).unwrap();
 

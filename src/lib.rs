@@ -33,10 +33,8 @@ macro_rules! model {
             )*
         }
 
-        impl ohmers::Ohmer for $class {
-            fn id(&self) -> usize { self.id }
-            fn set_id(&mut self, id: usize) { self.id = id; }
-            fn defaults() -> Self {
+        impl Default for $class {
+            fn default() -> Self {
                 $class {
                     id: 0,
                     $(
@@ -44,6 +42,11 @@ macro_rules! model {
                     )*
                 }
             }
+        }
+
+        impl ohmers::Ohmer for $class {
+            fn id(&self) -> usize { self.id }
+            fn set_id(&mut self, id: usize) { self.id = id; }
 
             // These functions are implemented in the trait, but this
             // reduces the runtime overhead
@@ -69,7 +72,7 @@ macro_rules! model {
 }
 
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
-    let mut obj = T::defaults();
+    let mut obj = T::default();
 
     let opt_id:Option<usize> = try!(r.hget(format!("{}:uniques:{}", obj.get_class_name(), property), value));
 
@@ -82,13 +85,13 @@ pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Clien
 }
 
 pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
-    let mut obj = T::defaults();
+    let mut obj = T::default();
     try!(obj.load(id, r));
     Ok(obj)
 }
 
 pub fn all_query<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Query<'a, T>, OhmerError> {
-    let class_name = T::defaults().get_class_name();
+    let class_name = T::default().get_class_name();
     Ok(Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r))
 }
 
@@ -96,12 +99,10 @@ pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerErro
     Ok(try!(try!(all_query(r)).try_iter()))
 }
 
-pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Sized {
+pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Default + Sized {
     fn id_field(&self) -> String { "id".to_string() }
     fn id(&self) -> usize;
     fn set_id(&mut self, id: usize);
-
-    fn defaults() -> Self;
 
     fn unique_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
     fn index_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
@@ -339,7 +340,7 @@ impl<'a, T: Ohmer> Query<'a, T> {
     }
 
     fn key(field: &str, value: &str) -> stal::Set {
-        stal::Set::Key(T::defaults().key_for_index(field, value).as_bytes().to_vec())
+        stal::Set::Key(T::default().key_for_index(field, value).as_bytes().to_vec())
     }
 
     pub fn find(field: &str, value: &str, r: &'a redis::Client) -> Self {
@@ -388,7 +389,7 @@ impl<'a, T: Ohmer> Query<'a, T> {
     }
 
     pub fn sort(&self, by: &str, limit: Option<(usize, usize)>, asc: bool, alpha: bool) -> Result<Iter<'a, T>, OhmerError> {
-        let default = T::defaults();
+        let default = T::default();
         let class_name = default.get_class_name();
         let key = if default.counters().contains(by) {
             format!("{}:*:{}", class_name, by)

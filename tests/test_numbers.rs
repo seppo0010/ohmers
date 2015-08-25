@@ -20,10 +20,8 @@ struct Numbers {
     isize: isize,
 }
 
-impl Ohmer for Numbers {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for Numbers {
+    fn default() -> Self {
         Numbers {
             id: 0,
             u8: 0,
@@ -40,10 +38,15 @@ impl Ohmer for Numbers {
     }
 }
 
+impl Ohmer for Numbers {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
+}
+
 #[test]
 fn test_numbers_max() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut numbers = Numbers::defaults();
+    let mut numbers = Numbers::default();
     numbers.u8 = std::u8::MAX;
     numbers.u16 = std::u16::MAX;
     numbers.u32 = std::u32::MAX;
@@ -63,7 +66,7 @@ fn test_numbers_max() {
 #[test]
 fn test_numbers_min() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut numbers = Numbers::defaults();
+    let mut numbers = Numbers::default();
     numbers.u8 = std::u8::MIN;
     numbers.u16 = std::u16::MIN;
     numbers.u32 = std::u32::MIN;

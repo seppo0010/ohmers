@@ -13,16 +13,18 @@ struct TvShow {
     votes: Counter,
 }
 
-impl Ohmer for TvShow {
-    fn id(&self) -> usize { self.id }
-    fn set_id(&mut self, id: usize) { self.id = id; }
-    fn defaults() -> Self {
+impl Default for TvShow {
+    fn default() -> Self {
         TvShow {
             id: 0,
             name: "".to_string(),
             votes: Counter,
         }
     }
+}
+impl Ohmer for TvShow {
+    fn id(&self) -> usize { self.id }
+    fn set_id(&mut self, id: usize) { self.id = id; }
 }
 
 impl PartialEq for TvShow {
@@ -33,7 +35,7 @@ impl PartialEq for TvShow {
 
 macro_rules! create {
     ($name: ident, $votes: expr, $conn: expr) => {{
-        let mut t = TvShow::defaults();
+        let mut t = TvShow::default();
         t.name = stringify!($name).to_owned();
         t.save($conn).unwrap();
         incrby!(t, votes, $votes, $conn).unwrap();
