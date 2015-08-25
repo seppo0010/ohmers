@@ -41,10 +41,13 @@ pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
     Ok(obj)
 }
 
-pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
+pub fn all_query<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Query<'a, T>, OhmerError> {
     let class_name = T::defaults().get_class_name();
-    let query = Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r);
-    Ok(try!(query.try_iter()))
+    Ok(Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r))
+}
+
+pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
+    Ok(try!(try!(all_query(r)).try_iter()))
 }
 
 pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Sized {
@@ -63,6 +66,12 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Size
 
     fn key_for_index(&self, field: &str, value: &str) -> String {
         format!("{}:indices:{}:{}", self.get_class_name(), field, value)
+    }
+
+    fn counters(&self) -> HashSet<String> {
+        let mut encoder = Encoder::new();
+        self.encode(&mut encoder).unwrap();
+        encoder.counters
     }
 
     fn get_class_name(&self) -> String {
@@ -223,7 +232,7 @@ impl From<EncoderError> for OhmerError {
     }
 }
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Counter;
 
 impl Counter {
@@ -330,6 +339,30 @@ impl<'a, T: Ohmer> Query<'a, T> {
 
     pub fn try_into_iter(self) -> Result<Iter<'a, T>, OhmerError> {
         Iter::new(self.set.into_ids().solve(), self.r)
+    }
+
+    pub fn sort(&self, by: &str, limit: Option<(usize, usize)>, asc: bool, alpha: bool) -> Result<Iter<'a, T>, OhmerError> {
+        let default = T::defaults();
+        let class_name = default.get_class_name();
+        let key = if default.counters().contains(by) {
+            format!("{}:*:{}", class_name, by)
+        } else {
+            format!("{}:*->{}", class_name, by)
+        }.as_bytes().to_vec();
+
+        let mut template = vec![b"SORT".to_vec(), vec![], b"BY".to_vec(), key];
+        if let Some(l) = limit {
+            template.push(b"LIMIT".to_vec());
+            template.push(format!("{}", l.0).as_bytes().to_vec());
+            template.push(format!("{}", l.1).as_bytes().to_vec());
+        }
+        template.push(if asc { b"ASC".to_vec() } else { b"DESC".to_vec() });
+        if alpha {
+            template.push(b"ALPHA".to_vec());
+        }
+
+        let stal = stal::Stal::from_template(template, vec![(self.set.clone(), 1)]);
+        Iter::new(stal.solve(), self.r)
     }
 }
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use msgpack;
 use redis;
@@ -18,6 +18,7 @@ pub struct Encoder {
     pub id_field: String,
     pub features: HashMap<String, String>,
     pub attributes: Vec<String>,
+    pub counters: HashSet<String>,
     status: EncoderStatus,
 }
 
@@ -28,6 +29,7 @@ impl Encoder {
             id_field: "".to_string(),
             features: HashMap::new(),
             attributes: vec![],
+            counters: HashSet::new(),
             status: EncoderStatus::Normal,
         }
     }
@@ -160,7 +162,7 @@ impl rustc_serialize::Encoder for Encoder {
         if self.features.contains_key("name") {
             match name {
                 "Reference" => self.status = EncoderStatus::Reference(try!(self.attributes.pop().ok_or(EncoderError::MissingField))),
-                "Counter" => { try!(self.attributes.pop().ok_or(EncoderError::MissingField)); },
+                "Counter" => { self.counters.insert(try!(self.attributes.pop().ok_or(EncoderError::MissingField))); },
                 "Set" => { try!(self.attributes.pop().ok_or(EncoderError::MissingField)); },
                 _ => return Err(EncoderError::UnknownStruct(name.to_string())),
             }
