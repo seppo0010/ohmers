@@ -22,6 +22,52 @@ use decoder::*;
 mod save;
 use save::SAVE;
 
+#[macro_export]
+macro_rules! model {
+    ($class: ident, $($key: ident => ($proptype: ty, $default: expr)),* ) => {
+        #[derive(RustcEncodable, RustcDecodable, Debug)]
+        struct $class {
+            id: usize,
+            $(
+                $key: $proptype,
+            )*
+        }
+
+        impl ohmers::Ohmer for $class {
+            fn id(&self) -> usize { self.id }
+            fn set_id(&mut self, id: usize) { self.id = id; }
+            fn defaults() -> Self {
+                $class {
+                    id: 0,
+                    $(
+                        $key: $default,
+                    )*
+                }
+            }
+
+            // These functions are implemented in the trait, but this
+            // reduces the runtime overhead
+            fn get_class_name(&self) -> String {
+                stringify!($class).to_owned()
+            }
+
+            fn key_for_unique(&self, field: &str, value: &str) -> String {
+                format!("{}:uniques:{}:{}", stringify!($class), field, value)
+            }
+
+            fn key_for_index(&self, field: &str, value: &str) -> String {
+                format!("{}:indices:{}:{}", stringify!($class), field, value)
+            }
+        }
+
+        impl PartialEq for $class {
+            fn eq(&self, other: &$class) -> bool {
+                self.id == other.id
+            }
+        }
+    }
+}
+
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
     let mut obj = T::defaults();
 
