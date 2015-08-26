@@ -98,20 +98,22 @@ macro_rules! model {
                 format!("{}:indices:{}:{}", stringify!($class), field, value)
             }
 
-            fn unique_fields<'a>(&self) -> HashSet<&'a str> {
-                HashSet::from_iter(vec![
-                        $(
-                            stringify!($ukey),
-                        )*
-                    ])
+            fn unique_fields<'a>(&self) -> std::collections::HashSet<&'a str> {
+                #![allow(unused_mut)]
+                let mut hs = std::collections::HashSet::new();
+                $(
+                    hs.insert(stringify!($ukey));
+                )*
+                hs
             }
 
-            fn index_fields<'a>(&self) -> HashSet<&'a str> {
-                HashSet::from_iter(vec![
-                        $(
-                            stringify!($ikey),
-                        )*
-                    ])
+            fn index_fields<'a>(&self) -> std::collections::HashSet<&'a str> {
+                #![allow(unused_mut)]
+                let mut hs = std::collections::HashSet::new();
+                $(
+                    hs.insert(stringify!($ikey));
+                )*
+                hs
             }
         }
 
