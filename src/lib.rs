@@ -45,11 +45,28 @@ macro_rules! model {
                 )*
                 }; $($key:$proptype = $default;)* });
     };
-    ($class: ident {
+    (
+     $class: ident {
      uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
      indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }) => {
-        #[derive(RustcEncodable, RustcDecodable, Debug)]
+        model!(derive { } $class { uniques {
+                $(
+                    $ukey: $uproptype = $udefault;
+                )*
+                }; indices {
+                $(
+                    $ikey: $iproptype = $idefault;
+                )*
+                }; $($key:$proptype = $default;)* });
+    };
+    (
+     derive { $($derive: ident),* }
+     $class: ident {
+     uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
+     indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
+        #[derive(RustcEncodable, RustcDecodable, Debug, $($derive)* )]
         struct $class {
             id: usize,
             $(
@@ -136,6 +153,28 @@ macro_rules! new {
     }}
 }
 
+#[macro_export]
+macro_rules! create {
+    ($class: ident { $($key:ident: $value: expr),*, }, $conn: expr) => {{
+        let mut obj = $class::default();
+        $(
+            obj.$key = $value;
+        )*
+        obj.save($conn).map(|_| obj)
+    }}
+}
+
+#[macro_export]
+macro_rules! find {
+    ($class: ident { $($key:ident: $value: expr),*, }, $conn: expr) => {{
+        ohmers::Query::<$class>::from_keys(&[
+                $(
+                    (stringify!($key), &*format!("{}", $value)),
+                 )*
+                ] as &[(&str, &str)], $conn)
+    }}
+}
+
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
     let mut obj = T::default();
 
@@ -201,7 +240,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         Ok(())
     }
 
-    fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError>{
+    fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError> {
         let mut encoder = Encoder::new();
         encoder.id_field = self.id_field();
         try!(self.encode(&mut encoder));
@@ -402,6 +441,11 @@ pub struct Query<'a, T: 'a + Ohmer> {
 impl<'a, T: Ohmer> Query<'a, T> {
     fn new(set: stal::Set, r: &'a redis::Client) -> Self {
         Query { set: set, phantom: PhantomData, r: r }
+    }
+
+    pub fn from_keys(kv: &[(&str, &str)], r: &'a redis::Client) -> Self {
+        let set = stal::Set::Inter(kv.iter().map(|kv| Query::<T>::key(kv.0, kv.1)).collect());
+        Query::new(set, r)
     }
 
     fn key(field: &str, value: &str) -> stal::Set {
