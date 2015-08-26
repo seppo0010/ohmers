@@ -19,8 +19,8 @@ use encoder::*;
 mod decoder;
 use decoder::*;
 
-mod save;
-use save::SAVE;
+mod lua;
+use lua::{DELETE, SAVE};
 
 #[macro_export]
 macro_rules! model {
@@ -274,11 +274,15 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         Ok(())
     }
 
-    fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError> {
+    fn encoder(&self) -> Result<Encoder, OhmerError> {
         let mut encoder = Encoder::new();
         encoder.id_field = self.id_field();
         try!(self.encode(&mut encoder));
+        Ok(encoder)
+    }
 
+    fn uniques_indices(&self, encoder: &Encoder
+            ) -> Result<(HashMap<String, String>, HashMap<String, Vec<String>>), OhmerError> {
         let mut unique_fields = self.unique_fields();
         let mut index_fields = self.index_fields();
         let mut uniques = HashMap::new();
@@ -300,7 +304,13 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         if unique_fields.len() > 0 {
             return Err(OhmerError::UnknownIndex(unique_fields.iter().next().unwrap().to_string()));
         }
+        Ok((uniques, indices))
 
+    }
+
+    fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError> {
+        let encoder = try!(self.encoder());
+        let (uniques, indices) = try!(self.uniques_indices(&encoder));
         let script = redis::Script::new(SAVE);
         let result = script
                 .arg(try!(msgpack_encode(&encoder.features)))
@@ -320,6 +330,29 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
             },
         };
         self.set_id(id);
+        Ok(())
+    }
+
+    fn delete(self, r: &redis::Client) -> Result<(), OhmerError> {
+        let encoder = try!(self.encoder());
+        let (uniques, _) = try!(self.uniques_indices(&encoder));
+
+        let mut tracked = encoder.sets;
+        tracked.extend(encoder.counters);
+
+        let mut model = HashMap::new();
+        let id = self.id();
+        let name = self.get_class_name();
+        model.insert("key", format!("{}:{}", name, id));
+        model.insert("id", format!("{}", id));
+        model.insert("name", name);
+
+        let script = redis::Script::new(DELETE);
+        let _:() = try!(script
+                .arg(try!(msgpack_encode(&model)))
+                .arg(try!(msgpack_encode(&uniques)))
+                .arg(try!(msgpack_encode(&tracked)))
+                .invoke(&try!(r.get_connection())));
         Ok(())
     }
 }
@@ -474,14 +507,14 @@ macro_rules! incrby {
 #[macro_export]
 macro_rules! incr {
     ($obj: expr, $prop: ident, $client: expr) => {{
-        incrby!($obj, $prop, 1, $client)
+        $obj.$prop.incr(&$obj, stringify!($prop), 1, $client)
     }}
 }
 
 #[macro_export]
 macro_rules! decr {
     ($obj: expr, $prop: ident, $client: expr) => {{
-        incrby!($obj, $prop, -1, $client)
+        $obj.$prop.incr(&$obj, stringify!($prop), -1, $client)
     }}
 }
 
