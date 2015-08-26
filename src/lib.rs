@@ -27,6 +27,11 @@ macro_rules! model {
     ($class: ident { $($key: ident:$proptype: ty = $default: expr);*; }) => {
         model!($class { uniques { }; indices { }; $($key:$proptype = $default;)* });
     };
+    (
+     derive { $($derive: ident),* }
+     $class: ident { $($key: ident:$proptype: ty = $default: expr);*; }) => {
+        model!( derive { $($derive, )* } $class { uniques { }; indices { }; $($key:$proptype = $default;)* });
+    };
     ($class: ident {
      uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }) => {
@@ -36,10 +41,32 @@ macro_rules! model {
                 )*
                 }; indices { }; $($key:$proptype = $default;)* });
     };
+    (
+     derive { $($derive: ident),* }
+     $class: ident {
+     uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
+        model!( derive { $($derive, )* } $class { uniques {
+                $(
+                    $ukey: $uproptype = $udefault;
+                )*
+                }; indices { }; $($key:$proptype = $default;)* });
+    };
     ($class: ident {
      indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }) => {
         model!($class { uniques { }; indices {
+                $(
+                    $ikey: $iproptype = $idefault;
+                )*
+                }; $($key:$proptype = $default;)* });
+    };
+    (
+     derive { $($derive: ident),* }
+     $class: ident {
+     indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
+     $($key: ident:$proptype: ty = $default: expr;)* }) => {
+        model!( derive { $($derive, )* } $class { uniques { }; indices {
                 $(
                     $ikey: $iproptype = $idefault;
                 )*
