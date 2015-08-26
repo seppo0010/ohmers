@@ -1,4 +1,4 @@
-#[macro_use(model, create)] extern crate ohmers;
+#[macro_use(model, create, collection)] extern crate ohmers;
 extern crate redis;
 extern crate rustc_serialize;
 
@@ -52,5 +52,11 @@ fn test_movie_year() {
     assert_eq!(
             movies,
             vec![bttf.clone(), cocoon.clone(), rocky_iv.clone()]
-            )
+            );
+
+    let movies = collection!(y85, movies, year, &client).sort("name", None, true, true).unwrap().collect::<Vec<_>>();
+    assert_eq!(
+            movies,
+            vec![bttf.clone(), cocoon.clone(), rocky_iv.clone()]
+            );
 }

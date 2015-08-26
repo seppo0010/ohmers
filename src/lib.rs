@@ -202,6 +202,13 @@ macro_rules! find {
     }}
 }
 
+#[macro_export]
+macro_rules! collection {
+    ($obj: ident, $prop: ident, $index: ident, $conn: expr) => {{
+        $obj.$prop.all(stringify!($index), &$obj, $conn)
+    }}
+}
+
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
     let mut obj = T::default();
 
