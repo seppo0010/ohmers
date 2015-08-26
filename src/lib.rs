@@ -30,7 +30,7 @@ macro_rules! model {
     (
      derive { $($derive: ident),* }
      $class: ident { $($key: ident:$proptype: ty = $default: expr);*; }) => {
-        model!( derive { $($derive, )* } $class { uniques { }; indices { }; $($key:$proptype = $default;)* });
+        model!( derive { $($derive),* } $class { uniques { }; indices { }; $($key:$proptype = $default;)* });
     };
     ($class: ident {
      uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
@@ -46,7 +46,7 @@ macro_rules! model {
      $class: ident {
      uniques { $($ukey: ident:$uproptype: ty = $udefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }) => {
-        model!( derive { $($derive, )* } $class { uniques {
+        model!( derive { $($derive),* } $class { uniques {
                 $(
                     $ukey: $uproptype = $udefault;
                 )*
@@ -66,7 +66,7 @@ macro_rules! model {
      $class: ident {
      indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }) => {
-        model!( derive { $($derive, )* } $class { uniques { }; indices {
+        model!( derive { $($derive),* } $class { uniques { }; indices {
                 $(
                     $ikey: $iproptype = $idefault;
                 )*
@@ -285,13 +285,13 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
             }
             if index_fields.remove(&**key) {
                 indices.insert(key.clone(), vec![encoder.attributes[pos + 1].clone()]);
+            } else if key.len() > 3 && &key[key.len() - 3..] == "_id" &&
+                index_fields.remove(&key[..key.len() - 3]) {
+                indices.insert(key.clone(), vec![encoder.attributes[pos + 1].clone()]);
             }
         }
         if unique_fields.len() > 0 {
             return Err(OhmerError::UnknownIndex(unique_fields.iter().next().unwrap().to_string()));
-        }
-        if index_fields.len() > 0 {
-            return Err(OhmerError::UnknownIndex(index_fields.iter().next().unwrap().to_string()));
         }
 
         let script = redis::Script::new(SAVE);
@@ -317,7 +317,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
     }
 }
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Reference<T: Ohmer> {
     id: usize,
     phantom: PhantomData<T>,
@@ -328,12 +328,31 @@ impl<T: Ohmer> Reference<T> {
         Reference { id: 0, phantom: PhantomData }
     }
 
+    pub fn with_value(obj: &T) -> Self {
+        Reference { id: obj.id(), phantom: PhantomData }
+    }
+
     pub fn get(&self, r: &redis::Client) -> Result<T, DecoderError> {
         get(self.id, r)
     }
 
     pub fn set(&mut self, obj: &T) {
         self.id = obj.id();
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
+pub struct Collection<T: Ohmer> {
+    phantom: PhantomData<T>,
+}
+
+impl<T: Ohmer> Collection<T> {
+    pub fn new() -> Self {
+        Collection { phantom: PhantomData }
+    }
+
+    pub fn all<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Query<T> {
+        Query::<T>::find(&*format!("{}_id", property), &*format!("{}", parent.id()), r)
     }
 }
 
