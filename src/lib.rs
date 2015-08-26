@@ -125,6 +125,17 @@ macro_rules! model {
     }
 }
 
+#[macro_export]
+macro_rules! new {
+    ($class: ident { $($key:ident: $value: expr),*, }) => {{
+        let mut obj = $class::default();
+        $(
+            obj.$key = $value;
+        )*
+        obj
+    }}
+}
+
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
     let mut obj = T::default();
 
