@@ -1,4 +1,4 @@
-extern crate rmp as msgpack;
+pub extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
 extern crate regex;
@@ -12,6 +12,7 @@ use std::string::FromUtf8Error;
 use redis::Commands;
 use redis::ToRedisArgs;
 use regex::Regex;
+pub use stal::Set as StalSet;
 
 mod encoder;
 use encoder::*;
@@ -193,12 +194,20 @@ macro_rules! create {
 
 #[macro_export]
 macro_rules! find {
-    ($class: ident { $($key:ident: $value: expr),*, }, $conn: expr) => {{
-        ohmers::Query::<$class>::from_keys(&[
-                $(
-                    (stringify!($key), &*format!("{}", $value)),
-                 )*
-                ] as &[(&str, &str)], $conn)
+    ($class: ident $({ $($key:ident: $value: expr),*, })||*, $conn: expr) => {{
+        ohmers::Query::<$class>::new(
+                ohmers::StalSet::Union(vec![
+                    $(
+                    ohmers::StalSet::Inter(
+                        vec![
+                        $(
+                            ohmers::Query::<$class>::key(stringify!($key), &*format!("{}", $value)),
+                        )*
+                        ]
+                    ),
+                    )*
+                    ]
+                ), $conn)
     }}
 }
 
@@ -525,7 +534,7 @@ pub struct Query<'a, T: 'a + Ohmer> {
 }
 
 impl<'a, T: Ohmer> Query<'a, T> {
-    fn new(set: stal::Set, r: &'a redis::Client) -> Self {
+    pub fn new(set: stal::Set, r: &'a redis::Client) -> Self {
         Query { set: set, phantom: PhantomData, r: r }
     }
 
@@ -534,7 +543,7 @@ impl<'a, T: Ohmer> Query<'a, T> {
         Query::new(set, r)
     }
 
-    fn key(field: &str, value: &str) -> stal::Set {
+    pub fn key(field: &str, value: &str) -> stal::Set {
         stal::Set::Key(T::default().key_for_index(field, value).as_bytes().to_vec())
     }
 

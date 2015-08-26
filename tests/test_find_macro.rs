@@ -70,4 +70,13 @@ fn test_model_find_macro() {
             }, &client).sort("name", None, true, true).unwrap().collect::<Vec<IPerson>>(),
             vec![bob.clone(), john.clone()]
             );
+
+    assert_eq!(
+            find!(IPerson {
+                day_of_birth: 3,
+            } || {
+                month_of_birth: 2,
+            }, &client).sort("name", None, true, true).unwrap().collect::<Vec<IPerson>>(),
+            vec![alice.clone(), bob.clone()]
+            );
 }
