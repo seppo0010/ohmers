@@ -375,6 +375,48 @@ macro_rules! create {
     }}
 }
 
+/// Returns a `Query` with all the `$class` objects  where `$key` is `$value`.
+/// All the `$key` must be declared as `indices` in the `model!` declaration.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create, find)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// # use redis::Commands;
+/// model!(
+///     Browser {
+///         indices {
+///             name:String = "".to_string();
+///             major_version:u8 = 0;
+///         };
+///         minor_version:u8 = 0;
+///     });
+///
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("Browser:indices:name:Firefox").unwrap();
+/// # let _:bool = client.del("Browser:indices:name:Chrome").unwrap();
+/// # let _:bool = client.del("Browser:indices:major_version:42").unwrap();
+/// # let _:bool = client.del("Browser:indices:major_version:43").unwrap();
+/// # let _:bool = client.del("Browser:indices:major_version:44").unwrap();
+/// create!(Browser { name: "Firefox".to_string(), major_version: 42, minor_version: 3, }, &client).unwrap();
+/// create!(Browser { name: "Firefox".to_string(), major_version: 42, minor_version: 4, }, &client).unwrap();
+/// create!(Browser { name: "Firefox".to_string(), major_version: 43, }, &client).unwrap();
+/// create!(Browser { name: "Firefox".to_string(), major_version: 43, minor_version: 1, }, &client).unwrap();
+/// create!(Browser { name: "Chrome".to_string(), major_version: 43, minor_version: 1, }, &client).unwrap();
+/// create!(Browser { name: "Chrome".to_string(), major_version: 43, minor_version: 2, }, &client).unwrap();
+/// create!(Browser { name: "Chrome".to_string(), major_version: 44, minor_version: 3, }, &client).unwrap();
+///
+/// assert_eq!(find!(
+///     Browser { name: "Chrome", major_version: 44, } ||
+///     { name: "Firefox", major_version: 43, },
+///     &client
+/// ).try_into_iter().unwrap().collect::<Vec<_>>().len(), 3);
+/// # }
+/// ```
 #[macro_export]
 macro_rules! find {
     ($class: ident $({ $($key:ident: $value: expr),*, })||*, $conn: expr) => {{
