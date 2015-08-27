@@ -240,7 +240,7 @@ macro_rules! create {
         $(
             obj.$key = $value;
         )*
-        obj.save($conn).map(|_| obj)
+        obj.save(&$conn).map(|_| obj)
     }}
 }
 
@@ -259,14 +259,91 @@ macro_rules! find {
                     ),
                     )*
                     ]
-                ), $conn)
+                ), &$conn)
     }}
 }
 
 #[macro_export]
 macro_rules! collection {
     ($obj: ident, $prop: ident, $index: ident, $conn: expr) => {{
-        $obj.$prop.all(stringify!($index), &$obj, $conn)
+        $obj.$prop.all(stringify!($index), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! len {
+    ($obj: ident. $prop: ident, $conn: expr) => {{
+        $obj.$prop.len(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! push_back {
+    ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
+        $obj.$prop.push_back(stringify!($prop), &$obj, &$el, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! push_front {
+    ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
+        $obj.$prop.push_front(stringify!($prop), &$obj, &$el, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! pop_back {
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.pop_back(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! pop_front {
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.pop_front(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! first {
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.first(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! last {
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.last(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! try_range {
+    ($obj: ident.$prop: ident[$start:expr => $end:expr], $conn: expr) => {{
+        $obj.$prop.try_range(stringify!($prop), &$obj, $start, $end, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! try_iter {
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.try_iter(stringify!($prop), &$obj, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! contains {
+    ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
+        $obj.$prop.contains(stringify!($prop), &$obj, &$el, &$conn)
+    }}
+}
+
+#[macro_export]
+macro_rules! remove {
+    ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
+        $obj.$prop.remove(stringify!($prop), &$obj, &$el, &$conn)
     }}
 }
 
