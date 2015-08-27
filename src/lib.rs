@@ -88,6 +88,28 @@ use decoder::*;
 mod lua;
 use lua::{DELETE, SAVE};
 
+/// Declares a struct.
+/// Fields may be declared as a part of uniques, indices, or regular fields.
+/// Every field must have a default value.
+/// The struct will derive RustcEncodable, RustcDecodable, and Default.
+/// More `derive`s can be specified.
+///
+/// A property `id: usize = 0;` is automatically added to track the object.
+///
+/// # Examples
+/// ```
+/// # #[macro_use(model)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// model!(
+///     derive { Clone, PartialOrd }
+///     MyStruct {
+///         uniques { my_unique_identifier:u8 = 0; };
+///         indices { my_index:u8 = 0; };
+///         other_field:String = "".to_string();
+///     });
+/// # fn main() {
+/// # }
+/// ```
 #[macro_export]
 macro_rules! model {
     ($class: ident { $($key: ident:$proptype: ty = $default: expr);*; } ) => {
