@@ -1,3 +1,67 @@
+//! Object-hash mapping library for Redis.
+//!
+//! Ohmers is a library for storing objects in Redis, a persistent
+//! key-value database.
+//! It is based on the Ruby library Ohm, and it uses the same key names,
+//! so it can be used in the same system.
+//!
+//! # Prerequisites
+//!
+//! Have a [redis server](https://github.com/antirez/redis/) running and a
+//! [redis-rs](https://github.com/mitsuhiko/redis-rs/) connection.
+//!
+//! # Getting started
+//!
+//! Ohmers maps Rust structs to hash maps in Redis. First define the structs
+//! using the model! macro, and then use their methods to created, read,
+//! update, delete.
+//!
+//! ```rust
+//! # #[macro_use(model, create, insert)] extern crate ohmers;
+//! # extern crate rustc_serialize;
+//! # extern crate redis;
+//! # use ohmers::*;
+//!
+//! model!(Event {
+//!     indices {
+//!         name:String = "My Event".to_string();
+//!     };
+//!     venue:Reference<Venue> = Reference::new();
+//!     participants:Set<Person> = Set::new();
+//!     votes:Counter = Counter;
+//! });
+//!
+//! model!(Venue {
+//!     name:String = "My Venue".to_string();
+//!     events:Set<Event> = Set::new();
+//! });
+//!
+//! model!(Person {
+//!     name:String = "A Person".to_string();
+//! });
+//! # fn main() {
+//! # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+//! let p1 = create!(Person { name: "Alice".to_string(), }, &client).unwrap();
+//! let p2 = create!(Person { name: "Bob".to_string(), }, &client).unwrap();
+//! let p3 = create!(Person { name: "Charlie".to_string(), }, &client).unwrap();
+//!
+//! let v1 = create!(Venue { name: "Home".to_string(), }, &client).unwrap();
+//! let v2 = create!(Venue { name: "Work".to_string(), }, &client).unwrap();
+//!
+//! let mut e1 = create!(Event { name: "Birthday Party".to_string(), }, &client).unwrap();
+//! insert!(e1.participants, p1, &client).unwrap();
+//! insert!(e1.participants, p2, &client).unwrap();
+//! insert!(e1.participants, p3, &client).unwrap();
+//! e1.venue.set(&v1);
+//! e1.save(&client).unwrap();
+//!
+//! let mut e2 = create!(Event { name: "Work Meeting".to_string(), }, &client).unwrap();
+//! insert!(e2.participants, p1, &client).unwrap();
+//! insert!(e2.participants, p2, &client).unwrap();
+//! e2.venue.set(&v2);
+//! e2.save(&client).unwrap();
+//! # }
+//! ```
 pub extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
