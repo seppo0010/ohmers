@@ -279,6 +279,13 @@ macro_rules! len {
 }
 
 #[macro_export]
+macro_rules! insert {
+    ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
+        $obj.$prop.insert(stringify!($prop), &$obj, &$el, &$conn)
+    }}
+}
+
+#[macro_export]
 macro_rules! push_back {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
         $obj.$prop.push_back(stringify!($prop), &$obj, &$el, &$conn)

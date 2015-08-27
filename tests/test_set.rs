@@ -1,4 +1,4 @@
-extern crate ohmers;
+#[macro_use(insert)] extern crate ohmers;
 extern crate redis;
 extern crate rustc_serialize;
 
@@ -63,8 +63,8 @@ fn test_set() {
 
     assert!(team.players.insert("players", &team, &p1, &client).unwrap());
     assert!(!team.players.insert("players", &team, &p1, &client).unwrap());
-    assert!(team.players.insert("players", &team, &p2, &client).unwrap());
-    assert!(!team.players.insert("players", &team, &p2, &client).unwrap());
+    assert!(insert!(team.players, &p2, &client).unwrap());
+    assert!(!insert!(team.players, &p2, &client).unwrap());
 
     assert!(team.players.contains("players", &team, &p1, &client).unwrap());
     assert!(team.players.contains("players", &team, &p2, &client).unwrap());
