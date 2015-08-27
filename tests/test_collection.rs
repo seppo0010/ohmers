@@ -54,7 +54,7 @@ fn test_movie_year() {
             vec![bttf.clone(), cocoon.clone(), rocky_iv.clone()]
             );
 
-    let movies = collection!(y85, movies, year, &client).sort("name", None, true, true).unwrap().collect::<Vec<_>>();
+    let movies = collection!(y85.movies, client).sort("name", None, true, true).unwrap().collect::<Vec<_>>();
     assert_eq!(
             movies,
             vec![bttf.clone(), cocoon.clone(), rocky_iv.clone()]

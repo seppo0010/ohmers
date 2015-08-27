@@ -4,6 +4,7 @@ extern crate rustc_serialize;
 extern crate regex;
 extern crate stal;
 
+use std::ascii::AsciiExt;
 use std::collections::{HashSet, HashMap};
 use std::marker::PhantomData;
 use std::mem::replace;
@@ -265,8 +266,8 @@ macro_rules! find {
 
 #[macro_export]
 macro_rules! collection {
-    ($obj: ident, $prop: ident, $index: ident, $conn: expr) => {{
-        $obj.$prop.all(stringify!($index), &$obj, &$conn)
+    ($obj: ident.$prop: ident, $conn: expr) => {{
+        $obj.$prop.all(&*$obj.get_class_name(), &$obj, &$conn)
     }}
 }
 
@@ -531,7 +532,7 @@ impl<T: Ohmer> Collection<T> {
     }
 
     pub fn all<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Query<T> {
-        Query::<T>::find(&*format!("{}_id", property), &*format!("{}", parent.id()), r)
+        Query::<T>::find(&*format!("{}_id", property.to_ascii_lowercase()), &*format!("{}", parent.id()), r)
     }
 }
 
