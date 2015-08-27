@@ -340,6 +340,30 @@ macro_rules! new {
     }}
 }
 
+/// Creates a new instance of `$class` using the default properties,
+/// overriding specified collection of `$key` with `$value`, and saving it
+/// in the database
+///
+/// # Examples
+/// ```
+/// # #[macro_use(model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// model!(
+///     MyStruct {
+///         k1:u8 = 1;
+///         k2:u8 = 2;
+///     });
+///
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let st = create!(MyStruct { k2: 3, }, &client).unwrap();
+/// assert!(st.id > 0); // object was already created in Redis
+/// assert_eq!(st.k1, 1);
+/// assert_eq!(st.k2, 3);
+/// # }
+/// ```
 #[macro_export]
 macro_rules! create {
     ($class: ident { $($key:ident: $value: expr),*, }, $conn: expr) => {{
