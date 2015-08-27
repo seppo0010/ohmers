@@ -348,6 +348,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
 
         let mut tracked = encoder.sets;
         tracked.extend(encoder.counters);
+        tracked.extend(encoder.lists);
 
         let mut model = HashMap::new();
         let id = self.id();
@@ -405,7 +406,85 @@ impl<T: Ohmer> Collection<T> {
     }
 }
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
+pub struct List<T: Ohmer> {
+    phantom: PhantomData<T>,
+}
+
+impl<T: Ohmer> List<T> {
+    pub fn new() -> Self {
+        List { phantom: PhantomData }
+    }
+
+    fn key_name<P: Ohmer>(&self, property: &str, parent: &P) -> Result<String, OhmerError> {
+        let id = parent.id();
+        if id == 0 {
+            Err(OhmerError::NotSaved)
+        } else {
+            Ok(format!("{}:{}:{}", parent.get_class_name(), property, parent.id()))
+        }
+    }
+
+    pub fn len<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<usize, OhmerError> {
+        Ok(try!(r.llen(try!(self.key_name(property, parent)))))
+    }
+
+    pub fn push_back<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<(), OhmerError> {
+        Ok(try!(r.rpush(try!(self.key_name(property, parent)), obj.id())))
+    }
+
+    pub fn pop_back<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
+        Ok(match try!(r.rpop(try!(self.key_name(property, parent)))) {
+            Some(id) => Some(try!(get(id, r))),
+            None => None,
+        })
+    }
+
+    pub fn push_front<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<(), OhmerError> {
+        Ok(try!(r.lpush(try!(self.key_name(property, parent)), obj.id())))
+    }
+
+    pub fn pop_front<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
+        Ok(match try!(r.lpop(try!(self.key_name(property, parent)))) {
+            Some(id) => Some(try!(get(id, r))),
+            None => None,
+        })
+    }
+
+    pub fn first<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
+        Ok(match try!(r.lindex(try!(self.key_name(property, parent)), 0)) {
+            Some(id) => Some(try!(get(id, r))),
+            None => None,
+        })
+    }
+
+    pub fn last<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
+        Ok(match try!(r.lindex(try!(self.key_name(property, parent)), -1)) {
+            Some(id) => Some(try!(get(id, r))),
+            None => None,
+        })
+    }
+
+    pub fn try_range<'a, P: Ohmer>(&'a self, property: &str, parent: &P, start: isize, end: isize, r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
+        let ids:Vec<usize> = try!(r.lrange(try!(self.key_name(property, parent)), start, end));
+        Ok(Iter::new(ids.into_iter(), r))
+    }
+
+    pub fn try_iter<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
+        self.try_range(property, parent, 0, -1, r)
+    }
+
+    pub fn contains<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
+        let ids:Vec<usize> = try!(r.lrange(try!(self.key_name(property, parent)), 0, -1));
+        Ok(ids.contains(&obj.id()))
+    }
+
+    pub fn remove<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<usize, OhmerError> {
+        Ok(try!(r.lrem(try!(self.key_name(property, parent)), 0, obj.id())))
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Set<T: Ohmer> {
     phantom: PhantomData<T>,
 }
@@ -455,6 +534,7 @@ pub enum OhmerError {
     NotSaved,
     RedisError(redis::RedisError),
     EncoderError(EncoderError),
+    DecoderError,
     UnknownIndex(String),
     UniqueIndexViolation(String),
     CommandError(Vec<u8>),
@@ -475,6 +555,12 @@ impl From<redis::RedisError> for OhmerError {
 impl From<EncoderError> for OhmerError {
     fn from(e: EncoderError) -> OhmerError {
         OhmerError::EncoderError(e)
+    }
+}
+
+impl From<DecoderError> for OhmerError {
+    fn from(_: DecoderError) -> OhmerError {
+        OhmerError::DecoderError
     }
 }
 
@@ -585,11 +671,11 @@ impl<'a, T: Ohmer> Query<'a, T> {
     }
 
     pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {
-        Iter::new(self.set.ids().solve(), self.r)
+        Iter::from_ops(self.set.ids().solve(), self.r)
     }
 
     pub fn try_into_iter(self) -> Result<Iter<'a, T>, OhmerError> {
-        Iter::new(self.set.into_ids().solve(), self.r)
+        Iter::from_ops(self.set.into_ids().solve(), self.r)
     }
 
     pub fn sort(&self, by: &str, limit: Option<(usize, usize)>, asc: bool, alpha: bool) -> Result<Iter<'a, T>, OhmerError> {
@@ -613,7 +699,7 @@ impl<'a, T: Ohmer> Query<'a, T> {
         }
 
         let stal = stal::Stal::from_template(template, vec![(self.set.clone(), 1)]);
-        Iter::new(stal.solve(), self.r)
+        Iter::from_ops(stal.solve(), self.r)
     }
 }
 
@@ -624,7 +710,15 @@ pub struct Iter<'a, T> {
 }
 
 impl<'a, T: Ohmer> Iter<'a, T> {
-    fn new(ops: (Vec<Vec<Vec<u8>>>, usize), r: &'a redis::Client) -> Result<Self, OhmerError> {
+    fn new(iter: std::vec::IntoIter<usize>, r: &'a redis::Client) -> Self {
+        Iter {
+            iter: iter,
+            r: r,
+            phantom: PhantomData,
+        }
+    }
+
+    fn from_ops(ops: (Vec<Vec<Vec<u8>>>, usize), r: &'a redis::Client) -> Result<Self, OhmerError> {
         let mut q = redis::pipe();
         q.atomic();
         let mut i = 0;
@@ -662,7 +756,7 @@ impl<'a, T: Ohmer> Iterator for Iter<'a, T> {
         match self.iter.next() {
             Some(id) => match get(id, self.r) {
                 Ok(v) => Some(v),
-                Err(e) => { println!("AAA {:?}", e); None},
+                Err(_) => None,
             },
             None => None,
         }
