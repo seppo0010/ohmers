@@ -147,7 +147,7 @@ macro_rules! model {
      indices { $($ikey: ident:$iproptype: ty = $idefault: expr;)* };
      $($key: ident:$proptype: ty = $default: expr;)* }
      ) => {
-        #[derive(RustcEncodable, RustcDecodable, Debug, $($derive)* )]
+        #[derive(RustcEncodable, RustcDecodable, Debug, $($derive,)* )]
         struct $class {
             id: usize,
             $(
