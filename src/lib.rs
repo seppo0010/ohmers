@@ -935,6 +935,38 @@ impl<T: Ohmer> Collection<T> {
     }
 }
 
+/// A list of elements.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(collection, model, create, push_back, len, pop_front)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use redis::Commands;
+/// # use ohmers::{Ohmer, Reference, get, List};
+/// model!(
+///     Task {
+///         body:String = "".to_string();
+///     });
+/// model!(
+///     Queue {
+///         tasks: List<Task> = List::new();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let queue = create!(Queue {}, &client).unwrap();
+/// let t1 = create!(Task { body: "task1".to_string() }, &client).unwrap();
+/// let t2 = create!(Task { body: "task2".to_string() }, &client).unwrap();
+/// let t3 = create!(Task { body: "task3".to_string() }, &client).unwrap();
+/// push_back!(queue.tasks, t1, client).unwrap();
+/// push_back!(queue.tasks, t2, client).unwrap();
+/// push_back!(queue.tasks, t3, client).unwrap();
+/// assert_eq!(len!(queue.tasks, client).unwrap(), 3);
+/// assert_eq!(&*pop_front!(queue.tasks, client).unwrap().unwrap().body, "task1");
+/// assert_eq!(len!(queue.tasks, client).unwrap(), 2);
+/// # }
+/// ```
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct List<T: Ohmer> {
     phantom: PhantomData<T>,
