@@ -554,6 +554,33 @@ macro_rules! remove {
     }}
 }
 
+/// Find an element by a unique index.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// # use redis::Commands;
+/// model!(
+///     OperativeSystem {
+///         uniques {
+///             name:String = "".to_string();
+///         };
+///         major_version:u8 = 0;
+///         minor_version:u8 = 0;
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("OperativeSystem:uniques:name").unwrap();
+/// create!(OperativeSystem { name: "Windows".to_owned(), major_version: 10, }, &client);
+/// create!(OperativeSystem { name: "GNU/Linux".to_owned(), major_version: 3, minor_version: 14, }, &client);
+/// create!(OperativeSystem { name: "OS X".to_owned(), major_version: 10, minor_version: 10, }, &client);
+/// assert_eq!(ohmers::with::<OperativeSystem, _>("name", "OS X", &client).unwrap().unwrap().major_version, 10);
+/// # }
+/// ```
 pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Client) -> Result<Option<T>, DecoderError> {
     let mut obj = T::default();
 
