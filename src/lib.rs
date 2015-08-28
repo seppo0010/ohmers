@@ -835,6 +835,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
 /// # #[macro_use(model, create)] extern crate ohmers;
 /// # extern crate rustc_serialize;
 /// # extern crate redis;
+/// # use redis::Commands;
 /// # use ohmers::{Ohmer, Reference, get};
 /// model!(
 ///     PhoneNumber {
@@ -847,6 +848,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
 ///     });
 /// # fn main() {
 /// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("PhoneNumber:uniques:number").unwrap();
 /// let n1 = create!(PhoneNumber { number: "555-123-4567".to_owned(), }, &client).unwrap();
 /// let n2 = create!(PhoneNumber { number: "555-456-7890".to_owned(), }, &client).unwrap();
 /// let mut d1 = create!(PhoneDevice { model: "iPhone 3GS".to_owned(), }, &client).unwrap();
