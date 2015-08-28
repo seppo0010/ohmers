@@ -977,6 +977,7 @@ impl<T: Ohmer> List<T> {
         List { phantom: PhantomData }
     }
 
+    /// Name of the list property in Redis
     fn key_name<P: Ohmer>(&self, property: &str, parent: &P) -> Result<String, OhmerError> {
         let id = parent.id();
         if id == 0 {
@@ -986,14 +987,17 @@ impl<T: Ohmer> List<T> {
         }
     }
 
+    /// Number of items in the list.
     pub fn len<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<usize, OhmerError> {
         Ok(try!(r.llen(try!(self.key_name(property, parent)))))
     }
 
+    /// Adds an element at the end of the list.
     pub fn push_back<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<(), OhmerError> {
         Ok(try!(r.rpush(try!(self.key_name(property, parent)), obj.id())))
     }
 
+    /// Takes an element from the end of the list.
     pub fn pop_back<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
         Ok(match try!(r.rpop(try!(self.key_name(property, parent)))) {
             Some(id) => Some(try!(get(id, r))),
@@ -1001,10 +1005,12 @@ impl<T: Ohmer> List<T> {
         })
     }
 
+    /// Adds an element at the beginning of the list.
     pub fn push_front<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<(), OhmerError> {
         Ok(try!(r.lpush(try!(self.key_name(property, parent)), obj.id())))
     }
 
+    /// Takes an element from the beginning of the list.
     pub fn pop_front<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
         Ok(match try!(r.lpop(try!(self.key_name(property, parent)))) {
             Some(id) => Some(try!(get(id, r))),
@@ -1012,6 +1018,7 @@ impl<T: Ohmer> List<T> {
         })
     }
 
+    /// Retrieves an element from the beginning of the list.
     pub fn first<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
         Ok(match try!(r.lindex(try!(self.key_name(property, parent)), 0)) {
             Some(id) => Some(try!(get(id, r))),
@@ -1019,6 +1026,7 @@ impl<T: Ohmer> List<T> {
         })
     }
 
+    /// Retrieves an element from the end of the list.
     pub fn last<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<Option<T>, OhmerError> {
         Ok(match try!(r.lindex(try!(self.key_name(property, parent)), -1)) {
             Some(id) => Some(try!(get(id, r))),
@@ -1026,20 +1034,25 @@ impl<T: Ohmer> List<T> {
         })
     }
 
+    /// Creates an iterator for the list between `start` and `end`.
+    /// Negative indices start from the end.
     pub fn try_range<'a, P: Ohmer>(&'a self, property: &str, parent: &P, start: isize, end: isize, r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
         let ids:Vec<usize> = try!(r.lrange(try!(self.key_name(property, parent)), start, end));
         Ok(Iter::new(ids.into_iter(), r))
     }
 
+    /// Creates an iterator for all the elements in the list.
     pub fn try_iter<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
         self.try_range(property, parent, 0, -1, r)
     }
 
+    /// Checks if an element is in the list.
     pub fn contains<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
         let ids:Vec<usize> = try!(r.lrange(try!(self.key_name(property, parent)), 0, -1));
         Ok(ids.contains(&obj.id()))
     }
 
+    /// Remove all occurrences of an element in the list.
     pub fn remove<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<usize, OhmerError> {
         Ok(try!(r.lrem(try!(self.key_name(property, parent)), 0, obj.id())))
     }
