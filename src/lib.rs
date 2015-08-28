@@ -323,7 +323,7 @@ macro_rules! model {
 ///     });
 ///
 /// # fn main() {
-/// let st = new!(MyStruct { k2: 3, });
+/// let st = new!(MyStruct { k2: 3 });
 /// assert_eq!(st.id, 0); // object was not created in Redis yet
 /// assert_eq!(st.k1, 1);
 /// assert_eq!(st.k2, 3);
@@ -331,7 +331,7 @@ macro_rules! model {
 /// ```
 #[macro_export]
 macro_rules! new {
-    ($class: ident { $($key:ident: $value: expr),*, }) => {{
+    ($class: ident { $($key:ident: $value: expr),*$(,)* }) => {{
         let mut obj = $class::default();
         $(
             obj.$key = $value;
@@ -366,7 +366,7 @@ macro_rules! new {
 /// ```
 #[macro_export]
 macro_rules! create {
-    ($class: ident { $($key:ident: $value: expr),*, }, $conn: expr) => {{
+    ($class: ident { $($key:ident: $value: expr),*$(,)* }, $conn: expr) => {{
         let mut obj = $class::default();
         $(
             obj.$key = $value;
