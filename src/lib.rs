@@ -620,6 +620,34 @@ pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
     Ok(obj)
 }
 
+/// Gets a query for all elements.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create, new)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// # use redis::Commands;
+/// model!(
+///     URL {
+///         domain:String = "".to_string();
+///         path:String = "/".to_string();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("URL:all").unwrap();
+/// # let _:bool = client.del("URL:id").unwrap();
+/// create!(URL { domain: "example.com".to_owned(), }, &client).unwrap();
+/// create!(URL { domain: "example.org".to_owned(), path: "/ping".to_owned(), }, &client).unwrap();
+/// assert_eq!(ohmers::all_query::<URL>(&client).unwrap().sort("path", None, true, true).unwrap().collect::<Vec<_>>(),
+///     vec![
+///         new!(URL { id: 1, domain: "example.com".to_owned(), }),
+///         new!(URL { id: 2, domain: "example.org".to_owned(), path: "/ping".to_owned(), }),
+///     ]);
+/// # }
+/// ```
 pub fn all_query<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Query<'a, T>, OhmerError> {
     let class_name = T::default().get_class_name();
     Ok(Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r))
