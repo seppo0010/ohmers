@@ -827,6 +827,34 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
     }
 }
 
+/// A Reference to another Ohmer object.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::{Ohmer, Reference, get};
+/// model!(
+///     PhoneNumber {
+///         uniques { number:String = "".to_string(); };
+///     });
+/// model!(
+///     PhoneDevice {
+///         number:Reference<PhoneNumber> = Reference::new();
+///         model:String = "".to_string();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let n1 = create!(PhoneNumber { number: "555-123-4567".to_owned(), }, &client).unwrap();
+/// let n2 = create!(PhoneNumber { number: "555-456-7890".to_owned(), }, &client).unwrap();
+/// let mut d1 = create!(PhoneDevice { model: "iPhone 3GS".to_owned(), }, &client).unwrap();
+/// d1.number.set(&n1);
+/// d1.save(&client).unwrap();
+/// assert_eq!(&*get::<PhoneDevice>(d1.id, &client).unwrap().number.get(&client).unwrap().number, "555-123-4567");
+/// # }
+/// ```
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Reference<T: Ohmer> {
     id: usize,
@@ -834,18 +862,23 @@ pub struct Reference<T: Ohmer> {
 }
 
 impl<T: Ohmer> Reference<T> {
+    /// Creates a new reference with no value.
     pub fn new() -> Self {
         Reference { id: 0, phantom: PhantomData }
     }
 
+    /// Creates a new reference with the specified value.
     pub fn with_value(obj: &T) -> Self {
         Reference { id: obj.id(), phantom: PhantomData }
     }
 
+    /// Returns a new instance of the referenced object.
     pub fn get(&self, r: &redis::Client) -> Result<T, DecoderError> {
         get(self.id, r)
     }
 
+    /// Updates the reference to the new object. It does not save automatically,
+    /// `Parent.save(&connection);` still needs to be called.
     pub fn set(&mut self, obj: &T) {
         self.id = obj.id();
     }
