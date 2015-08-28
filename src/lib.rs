@@ -436,6 +436,10 @@ macro_rules! find {
     }}
 }
 
+/// Properties declared as `Collection` can use the collection macro to get a
+/// `Query` to iterate over all of its elements.
+/// A `Collection` is an accessor to objects that have a `Reference` to the
+/// object.
 #[macro_export]
 macro_rules! collection {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -443,6 +447,7 @@ macro_rules! collection {
     }}
 }
 
+/// Number of elements in a List or Set property.
 #[macro_export]
 macro_rules! len {
     ($obj: ident. $prop: ident, $conn: expr) => {{
@@ -450,6 +455,7 @@ macro_rules! len {
     }}
 }
 
+/// Insert `$el` in `$obj.$prop`. The property must be a Set.
 #[macro_export]
 macro_rules! insert {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
@@ -457,6 +463,7 @@ macro_rules! insert {
     }}
 }
 
+/// Adds `$el` at the end of `$obj.$prop`. The property must be a List.
 #[macro_export]
 macro_rules! push_back {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
@@ -464,6 +471,7 @@ macro_rules! push_back {
     }}
 }
 
+/// Adds `$el` at the beginning of `$obj.$prop`. The property must be a List.
 #[macro_export]
 macro_rules! push_front {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
@@ -471,6 +479,8 @@ macro_rules! push_front {
     }}
 }
 
+/// Retrieves and remove an element from the end of `$obj.$prop`.
+/// The property must be a List.
 #[macro_export]
 macro_rules! pop_back {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -478,6 +488,8 @@ macro_rules! pop_back {
     }}
 }
 
+/// Retrieves and remove an element from the beginning of `$obj.$prop`.
+/// The property must be a List.
 #[macro_export]
 macro_rules! pop_front {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -485,6 +497,8 @@ macro_rules! pop_front {
     }}
 }
 
+/// Retrieves an element from the beginning of `$obj.$prop`.
+/// The property must be a List.
 #[macro_export]
 macro_rules! first {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -492,6 +506,8 @@ macro_rules! first {
     }}
 }
 
+/// Retrieves an element from the end of `$obj.$prop`.
+/// The property must be a List.
 #[macro_export]
 macro_rules! last {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -499,6 +515,13 @@ macro_rules! last {
     }}
 }
 
+/// Creates an iterable of `$obj.$prop` between `$start` and `$end`.
+/// The property must be a List.
+///
+/// # Examples
+/// ```rust,ignore
+/// try_range!(myobj.mylist[0 => 4], &client);
+/// ```
 #[macro_export]
 macro_rules! try_range {
     ($obj: ident.$prop: ident[$start:expr => $end:expr], $conn: expr) => {{
@@ -506,6 +529,8 @@ macro_rules! try_range {
     }}
 }
 
+/// Creates an iterable of all elements in `$obj.$prop`.
+/// The property must be a List.
 #[macro_export]
 macro_rules! try_iter {
     ($obj: ident.$prop: ident, $conn: expr) => {{
@@ -513,6 +538,7 @@ macro_rules! try_iter {
     }}
 }
 
+/// Checks if an element is in a List or a Set.
 #[macro_export]
 macro_rules! contains {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
@@ -520,6 +546,7 @@ macro_rules! contains {
     }}
 }
 
+/// Removes occurences of an element in a List or a Set.
 #[macro_export]
 macro_rules! remove {
     ($obj: ident.$prop: ident, $el: expr, $conn: expr) => {{
