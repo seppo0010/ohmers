@@ -653,6 +653,33 @@ pub fn all_query<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Query<'a, T>
     Ok(Query::<'a, T>::new(stal::Set::Key(format!("{}:all", class_name).as_bytes().to_vec()), r))
 }
 
+/// Gets an iterator for all elements.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create, new)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// # use redis::Commands;
+/// model!(
+///     Furniture {
+///         kind:String = "".to_string();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("Furniture:all").unwrap();
+/// # let _:bool = client.del("Furniture:id").unwrap();
+/// create!(Furniture { kind: "Couch".to_owned(), }, &client).unwrap();
+/// create!(Furniture { kind: "Chair".to_owned(), }, &client).unwrap();
+/// assert_eq!(ohmers::all::<Furniture>(&client).unwrap().collect::<Vec<_>>(),
+///     vec![
+///         new!(Furniture { id: 1, kind: "Chair".to_owned(), }),
+///         new!(Furniture { id: 2, kind: "Couch".to_owned(), }),
+///     ]);
+/// # }
+/// ```
 pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerError> {
     Ok(try!(try!(all_query(r)).try_iter()))
 }
