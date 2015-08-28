@@ -886,6 +886,39 @@ impl<T: Ohmer> Reference<T> {
     }
 }
 
+/// A wrapper for classes that are referenced from another classes property.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(collection, model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use redis::Commands;
+/// # use ohmers::{Ohmer, Reference, get, Collection};
+/// model!(
+///     Tweeter {
+///         name:String = "".to_string();
+///         tweets:Collection<Tweet> = Collection::new();
+///     });
+/// model!(
+///     Tweet {
+///         indices { tweeter:Reference<Tweeter> = Reference::new(); };
+///         description:String = "".to_string();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let tweeter = create!(Tweeter { name: "Alice".to_owned(), }, &client).unwrap();
+/// let mut tweet1 = create!(Tweet { tweeter: Reference::with_value(&tweeter), description: "foo".to_owned() }, &client).unwrap();
+/// let mut tweet2 = create!(Tweet { tweeter: Reference::with_value(&tweeter), description: "bar".to_owned() }, &client).unwrap();
+/// assert_eq!(collection!(tweeter.tweets, &client).sort("description", None, true, true).unwrap().collect::<Vec<_>>(),
+///         vec![
+///         tweet2,
+///         tweet1,
+///         ]
+/// );
+/// # }
+/// ```
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Collection<T: Ohmer> {
     phantom: PhantomData<T>,
@@ -896,6 +929,7 @@ impl<T: Ohmer> Collection<T> {
         Collection { phantom: PhantomData }
     }
 
+    /// Returns a query for all T elements referencing this object.
     pub fn all<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Query<T> {
         Query::<T>::find(&*format!("{}_id", property.to_ascii_lowercase()), &*format!("{}", parent.id()), r)
     }
