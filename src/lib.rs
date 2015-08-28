@@ -594,6 +594,26 @@ pub fn with<T: Ohmer, S: ToRedisArgs>(property: &str, value: S, r: &redis::Clien
     Ok(Some(obj))
 }
 
+/// Gets an element by id.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use ohmers::Ohmer;
+/// # use redis::Commands;
+/// model!(
+///     Server {
+///         name:String = "".to_string();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let server = create!(Server { name: "My Server".to_owned(), }, &client).unwrap();
+/// assert_eq!(&*ohmers::get::<Server>(server.id, &client).unwrap().name, "My Server");
+/// # }
+/// ```
 pub fn get<T: Ohmer>(id: usize, r: &redis::Client) -> Result<T, DecoderError> {
     let mut obj = T::default();
     try!(obj.load(id, r));
