@@ -1058,6 +1058,38 @@ impl<T: Ohmer> List<T> {
     }
 }
 
+/// An unordered collection of items.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(collection, model, create, insert, len, remove)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use redis::Commands;
+/// # use ohmers::{Ohmer, Reference, get, Set};
+/// model!(
+///     Task {
+///         body:String = "".to_string();
+///     });
+/// model!(
+///     Queue {
+///         tasks: Set<Task> = Set::new();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let queue = create!(Queue {}, &client).unwrap();
+/// let t1 = create!(Task { body: "task1".to_string() }, &client).unwrap();
+/// let t2 = create!(Task { body: "task2".to_string() }, &client).unwrap();
+/// let t3 = create!(Task { body: "task3".to_string() }, &client).unwrap();
+/// insert!(queue.tasks, t1, client).unwrap();
+/// insert!(queue.tasks, t2, client).unwrap();
+/// insert!(queue.tasks, t3, client).unwrap();
+/// assert_eq!(len!(queue.tasks, client).unwrap(), 3);
+/// assert!(remove!(queue.tasks, t1, client).unwrap());
+/// assert_eq!(len!(queue.tasks, client).unwrap(), 2);
+/// # }
+/// ```
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Set<T: Ohmer> {
     phantom: PhantomData<T>,
@@ -1068,6 +1100,7 @@ impl<T: Ohmer> Set<T> {
         Set { phantom: PhantomData }
     }
 
+    /// Name of the set property in Redis
     fn key_name<P: Ohmer>(&self, property: &str, parent: &P) -> Result<String, OhmerError> {
         let id = parent.id();
         if id == 0 {
@@ -1077,27 +1110,35 @@ impl<T: Ohmer> Set<T> {
         }
     }
 
+    /// Gets a `stal::Set` pointing to the key containing the set.
     pub fn key<P: Ohmer>(&self, property: &str, parent: &P) -> Result<stal::Set, OhmerError> {
         Ok(stal::Set::Key(try!(self.key_name(property, parent)).as_bytes().to_vec()))
     }
 
+    /// Gets a `Query` object for all the elements in the set.
     pub fn query<'a, P: Ohmer>(&'a self, property: &str, parent: &P, r: &'a redis::Client) -> Result<Query<T>, OhmerError> {
         let key = try!(self.key(property, parent));
         Ok(Query::new(key, r))
     }
 
+    /// Adds an element to the set. Returns true when the element was added,
+    /// false if it was already present.
     pub fn insert<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
         Ok(try!(r.sadd(try!(self.key_name(property, parent)), obj.id())))
     }
 
+    /// Removes an element to the set. Returns true when the element was removed,
+    /// false if it was already absent.
     pub fn remove<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
         Ok(try!(r.srem(try!(self.key_name(property, parent)), obj.id())))
     }
 
+    /// Returns true if the element is in the set.
     pub fn contains<P: Ohmer>(&self, property: &str, parent: &P, obj: &T, r: &redis::Client) -> Result<bool, OhmerError> {
         Ok(try!(r.sismember(try!(self.key_name(property, parent)), obj.id())))
     }
 
+    /// Counts the number of elements in the set.
     pub fn len<P: Ohmer>(&self, property: &str, parent: &P, r: &redis::Client) -> Result<usize, OhmerError> {
         Ok(try!(r.scard(try!(self.key_name(property, parent)))))
     }
