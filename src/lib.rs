@@ -684,34 +684,51 @@ pub fn all<'a, T: 'a + Ohmer>(r: &'a redis::Client) -> Result<Iter<T>, OhmerErro
     Ok(try!(try!(all_query(r)).try_iter()))
 }
 
+/// Structs that can be stored in and retrieved from Redis.
+/// You can use the `model!` macro as a helper.
 pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Default + Sized {
+    /// The name of the field storing the unique auto increment identifier.
+    /// It must be named "id" to be consistent with the LUA scripts.
     fn id_field(&self) -> String { "id".to_string() }
+
+    /// The object unique identifier. It is 0 if it was not saved yet.
     fn id(&self) -> usize;
+    /// Sets the object unique identifier. It should not be called manually,
+    /// it is set after save.
     fn set_id(&mut self, id: usize);
 
+    /// Fields with a unique index.
     fn unique_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
+
+    /// Fields with an index.
     fn index_fields<'a>(&self) -> HashSet<&'a str> { HashSet::new() }
 
+    /// Redis key to find an element with a unique index field value.
     fn key_for_unique(&self, field: &str, value: &str) -> String {
         format!("{}:uniques:{}:{}", self.get_class_name(), field, value)
     }
 
+    /// Redis key to find all elements with an indexed field value.
     fn key_for_index(&self, field: &str, value: &str) -> String {
         format!("{}:indices:{}:{}", self.get_class_name(), field, value)
     }
 
+    /// Name of all the fields that are counters. Counters are stored
+    /// independently to keep atomicity in its operations.
     fn counters(&self) -> HashSet<String> {
         let mut encoder = Encoder::new();
         self.encode(&mut encoder).unwrap();
         encoder.counters
     }
 
+    /// Object name used in the database.
     fn get_class_name(&self) -> String {
         let mut encoder = Encoder::new();
         self.encode(&mut encoder).unwrap();
         encoder.features.remove("name").unwrap()
     }
 
+    /// Loads an object by id.
     fn load(&mut self, id: usize, r: &redis::Client) -> Result<(), DecoderError> {
         let mut properties:HashMap<String, String> = try!(try!(r.get_connection()).hgetall(format!("{}:{}", self.get_class_name(), id)));
         properties.insert("id".to_string(), format!("{}", id));
@@ -721,6 +738,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         Ok(())
     }
 
+    /// Serializes this object.
     fn encoder(&self) -> Result<Encoder, OhmerError> {
         let mut encoder = Encoder::new();
         encoder.id_field = self.id_field();
@@ -728,6 +746,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         Ok(encoder)
     }
 
+    /// Grabs all the uniques and indices from this object.
     fn uniques_indices(&self, encoder: &Encoder
             ) -> Result<(HashMap<String, String>, HashMap<String, Vec<String>>), OhmerError> {
         let mut unique_fields = self.unique_fields();
@@ -755,6 +774,8 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
 
     }
 
+    /// Saves the object in the database, and sets the instance `id` if it was
+    /// not set.
     fn save(&mut self, r: &redis::Client) -> Result<(), OhmerError> {
         let encoder = try!(self.encoder());
         let (uniques, indices) = try!(self.uniques_indices(&encoder));
@@ -780,6 +801,7 @@ pub trait Ohmer : rustc_serialize::Encodable + rustc_serialize::Decodable + Defa
         Ok(())
     }
 
+    /// Deletes the object from the database.
     fn delete(self, r: &redis::Client) -> Result<(), OhmerError> {
         let encoder = try!(self.encoder());
         let (uniques, _) = try!(self.uniques_indices(&encoder));
