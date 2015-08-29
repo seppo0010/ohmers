@@ -1186,10 +1186,34 @@ impl From<DecoderError> for OhmerError {
     }
 }
 
+/// Atomic counter
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(collection, model, create, incr, counter)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use redis::Commands;
+/// # use ohmers::{Ohmer, Reference, Counter};
+/// model!(
+///     Party {
+///         votes: Counter = Counter;
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// let party = create!(Party {}, &client).unwrap();
+/// assert_eq!(incr!(party.votes, &client).unwrap(), 1);
+/// assert_eq!(incr!(party.votes, &client).unwrap(), 2);
+/// assert_eq!(incr!(party.votes, 50, &client).unwrap(), 52);
+/// assert_eq!(counter!(party.votes, &client).unwrap(), 52);
+/// # }
+/// ```
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub struct Counter;
 
 impl Counter {
+    /// Key name in the database
     fn get_key<T: Ohmer>(&self, obj: &T, prop: &str) -> Result<String, OhmerError> {
         let class_name = obj.get_class_name();
         let id = obj.id();
@@ -1199,38 +1223,40 @@ impl Counter {
         Ok(format!("{}:{}:{}", class_name, id, prop))
     }
 
+    /// Increments the counter by `incr` and returns the new value.
     pub fn incr<T: Ohmer>(&self, obj: &T, prop: &str, incr: i64, r: &redis::Client) -> Result<i64, OhmerError> {
         let key = try!(self.get_key(obj, prop));
         Ok(try!(r.incr(key, incr)))
     }
 
+    /// Gets the current counter value.
     pub fn get<T: Ohmer>(&self, obj: &T, prop: &str, r: &redis::Client) -> Result<i64, OhmerError> {
         let key = try!(self.get_key(obj, prop));
         let r:Option<i64> = try!(r.get(key));
-        match r {
-            Some(v) => Ok(v),
-            None => Ok(0),
-        }
+        Ok(r.unwrap_or(0))
     }
 }
 
 #[macro_export]
-macro_rules! incrby {
-    ($obj: expr, $prop: ident, $incr: expr, $client: expr) => {{
-        $obj.$prop.incr(&$obj, stringify!($prop), $incr, $client)
+macro_rules! counter {
+    ($obj: ident.$prop: ident, $client: expr) => {{
+        $obj.$prop.get(&$obj, stringify!($prop), $client)
     }}
 }
 
 #[macro_export]
 macro_rules! incr {
-    ($obj: expr, $prop: ident, $client: expr) => {{
-        $obj.$prop.incr(&$obj, stringify!($prop), 1, $client)
+    ($obj: ident.$prop: ident, $incr: expr, $client: expr) => {{
+        $obj.$prop.incr(&$obj, stringify!($prop), $incr, &$client)
+    }};
+    ($obj: ident.$prop: ident, $client: expr) => {{
+        incr!($obj.$prop, 1, $client)
     }}
 }
 
 #[macro_export]
 macro_rules! decr {
-    ($obj: expr, $prop: ident, $client: expr) => {{
+    ($obj: ident.$prop: ident, $client: expr) => {{
         $obj.$prop.incr(&$obj, stringify!($prop), -1, $client)
     }}
 }

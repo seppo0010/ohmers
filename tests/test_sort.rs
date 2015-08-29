@@ -1,4 +1,4 @@
-#[macro_use(incrby)] extern crate ohmers;
+#[macro_use(incr)] extern crate ohmers;
 extern crate redis;
 extern crate rustc_serialize;
 
@@ -38,7 +38,7 @@ macro_rules! create {
         let mut t = TvShow::default();
         t.name = stringify!($name).to_owned();
         t.save($conn).unwrap();
-        incrby!(t, votes, $votes, $conn).unwrap();
+        incr!(t.votes, $votes, $conn).unwrap();
         t
     }}
 }

@@ -28,7 +28,7 @@ fn test_model_delete() {
             color: 0x0000FF,
             location: 1,
             }, &client).unwrap();
-    incr!(chair1, legs, &client).unwrap();
+    incr!(chair1.legs, &client).unwrap();
     chair1.delete(&client).unwrap();
     assert_eq!(
             vec!["Chair:id".to_owned()],
