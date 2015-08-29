@@ -1146,12 +1146,19 @@ impl<T: Ohmer> Set<T> {
 
 #[derive(PartialEq, Debug)]
 pub enum OhmerError {
+    /// The operation requires the object to have an id, but it was never saved
     NotSaved,
+    /// Error communicating with the server
     RedisError(redis::RedisError),
+    /// Error encoding the object
     EncoderError(EncoderError),
+    /// Error decoding the object
     DecoderError,
+    /// A unique field has no value. The field name is returned.
     UnknownIndex(String),
+    /// A unique field value is already in use. The field name is returned.
     UniqueIndexViolation(String),
+    /// There was an error translating a field to a string using utf8.
     CommandError(Vec<u8>),
 }
 
