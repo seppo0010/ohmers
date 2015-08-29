@@ -1261,6 +1261,40 @@ macro_rules! decr {
     }}
 }
 
+/// A query of a set, or a result of set operations.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use(collection, model, create)] extern crate ohmers;
+/// # extern crate rustc_serialize;
+/// # extern crate redis;
+/// # use redis::Commands;
+/// # use ohmers::{Ohmer, Query};
+/// model!(
+///     derive { Clone }
+///     Dog {
+///         indices {
+///             age:u8 = 0;
+///             color:String = "".to_owned();
+///         };
+///         name:String = "".to_owned();
+///     });
+/// # fn main() {
+/// # let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+/// # let _:bool = client.del("Dog:indices:age:3").unwrap();
+/// # let _:bool = client.del("Dog:indices:color:black").unwrap();
+/// create!(Dog { name: "Max".to_string(), age: 3, color: "white".to_string() }, &client).unwrap();
+/// let buddy = create!(Dog { name: "Buddy".to_string(), age: 3, color: "black".to_string() }, &client).unwrap();
+/// create!(Dog { name: "Bella".to_string(), age: 2, color: "black".to_string() }, &client).unwrap();
+/// let lola = create!(Dog { name: "Lola".to_string(), age: 3, color: "black".to_string() }, &client).unwrap();
+/// assert_eq!(Query::<Dog>::find("age", "3", &client).inter("color", "black").sort("name", None, true, true).unwrap().collect::<Vec<_>>(), 
+///     vec![
+///         buddy.clone(),
+///         lola.clone(),
+///     ]);
+/// # }
+/// ```
 pub struct Query<'a, T: 'a + Ohmer> {
     set: stal::Set,
     r: &'a redis::Client,
@@ -1268,64 +1302,81 @@ pub struct Query<'a, T: 'a + Ohmer> {
 }
 
 impl<'a, T: Ohmer> Query<'a, T> {
+    /// Create a new Query for a Set
     pub fn new(set: stal::Set, r: &'a redis::Client) -> Self {
         Query { set: set, phantom: PhantomData, r: r }
     }
 
+    /// Creates a new query with the intersection of all key/value
     pub fn from_keys(kv: &[(&str, &str)], r: &'a redis::Client) -> Self {
         let set = stal::Set::Inter(kv.iter().map(|kv| Query::<T>::key(kv.0, kv.1)).collect());
         Query::new(set, r)
     }
 
+    /// Creates the stal set for a key/value combination
     pub fn key(field: &str, value: &str) -> stal::Set {
         stal::Set::Key(T::default().key_for_index(field, value).as_bytes().to_vec())
     }
 
+    /// Creates a query for a key/value combination
     pub fn find(field: &str, value: &str, r: &'a redis::Client) -> Self {
         Query { set: Query::<T>::key(field, value), phantom: PhantomData, r: r }
     }
 
+    /// Updates the set to be the intersection of the current one and
+    /// the set where `field`=`value`.
     pub fn inter(&mut self, field: &str, value: &str) -> &mut Self {
         self.sinter(vec![Query::<T>::key(field, value)]);
         self
     }
 
+    /// Updates the set to be the intersection of the current set and
+    /// all given sets.
     pub fn sinter(&mut self, mut sets: Vec<stal::Set>) {
         let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.push(set);
         self.set = stal::Set::Inter(sets);
     }
 
+    /// Updates the set to be the union of the current one and
+    /// the set where `field`=`value`.
     pub fn union(&mut self, field: &str, value: &str) -> &mut Self {
         self.sunion(vec![Query::<T>::key(field, value)]);
         self
     }
 
+    /// Updates the set to be the union of the current set and
+    /// all given sets.
     pub fn sunion(&mut self, mut sets: Vec<stal::Set>) {
         let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.push(set);
         self.set = stal::Set::Union(sets);
     }
 
+    /// Updates the set to remove all elements where `field`=`value`.
     pub fn diff(&mut self, field: &str, value: &str) -> &mut Self {
         self.sdiff(vec![Query::<T>::key(field, value)]);
         self
     }
 
+    /// Updates the set to remove all elements in any of the provided sets.
     pub fn sdiff(&mut self, mut sets: Vec<stal::Set>) {
         let set = replace(&mut self.set, stal::Set::Key(vec![]));
         sets.insert(0, set);
         self.set = stal::Set::Diff(sets);
     }
 
+    /// Creates an iterator for all objects in the set.
     pub fn try_iter(&self) -> Result<Iter<'a, T>, OhmerError> {
         Iter::from_ops(self.set.ids().solve(), self.r)
     }
 
+    /// Creates an iterator for all objects in the set, consuming the query.
     pub fn try_into_iter(self) -> Result<Iter<'a, T>, OhmerError> {
         Iter::from_ops(self.set.into_ids().solve(), self.r)
     }
 
+    /// Creates an iterator for all objects in the set sorted by `by`.
     pub fn sort(&self, by: &str, limit: Option<(usize, usize)>, asc: bool, alpha: bool) -> Result<Iter<'a, T>, OhmerError> {
         let default = T::default();
         let class_name = default.get_class_name();
