@@ -1402,6 +1402,7 @@ impl<'a, T: Ohmer> Query<'a, T> {
     }
 }
 
+/// Iterator for query results
 pub struct Iter<'a, T> {
     r: &'a redis::Client,
     iter: std::vec::IntoIter<usize>,
@@ -1409,6 +1410,7 @@ pub struct Iter<'a, T> {
 }
 
 impl<'a, T: Ohmer> Iter<'a, T> {
+    /// Creates a new iterator from a list of ids
     fn new(iter: std::vec::IntoIter<usize>, r: &'a redis::Client) -> Self {
         Iter {
             iter: iter,
@@ -1417,6 +1419,9 @@ impl<'a, T: Ohmer> Iter<'a, T> {
         }
     }
 
+    /// Creates an iterator from a list of operations. The operations must
+    /// be wrapped in a MULTI/EXEC, and it is required to provide which
+    /// operation returns the list of ids.
     fn from_ops(ops: (Vec<Vec<Vec<u8>>>, usize), r: &'a redis::Client) -> Result<Self, OhmerError> {
         let mut q = redis::pipe();
         q.atomic();
