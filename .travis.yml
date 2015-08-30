@@ -23,6 +23,7 @@ script:
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
       cargo doc;
     fi
+  - rustdoc --test README.md -L target/debug -L target/debug/deps
 
 after_success:
   - travis-cargo --only nightly doc-upload

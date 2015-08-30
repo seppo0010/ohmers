@@ -2,6 +2,14 @@
 name = "ohmers"
 version = "0.1.0"
 authors = ["Sebastian Waisbrot <seppo0010@gmail.com>"]
+license-file = "LICENSE"
+
+description = "A library for retrieving and storing objects in a Redis server"
+readme = "README.md"
+documentation = "http://seppo0010.github.io/ohmers/"
+
+repository = "https://github.com/seppo0010/ohmers"
+keywords = ["redis", "ohm", "orm"]
 
 [dependencies]
 rustc-serialize = "0.3.16"
