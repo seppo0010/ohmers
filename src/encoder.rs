@@ -1,9 +1,9 @@
-use std::collections::{HashMap, HashSet};
+extern crate redis;
+extern crate rmp as msgpack;
+extern crate rustc_serialize;
 
-use msgpack;
-use redis;
-use rustc_serialize;
 use std::ascii::AsciiExt;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, PartialEq)]
 enum EncoderStatus {
