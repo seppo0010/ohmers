@@ -62,7 +62,7 @@
 //! e2.save(&client).unwrap();
 //! # }
 //! ```
-pub extern crate rmp as msgpack;
+extern crate rmp as msgpack;
 extern crate redis;
 extern crate rustc_serialize;
 extern crate regex;
@@ -1288,7 +1288,7 @@ macro_rules! decr {
 /// let buddy = create!(Dog { name: "Buddy".to_string(), age: 3, color: "black".to_string() }, &client).unwrap();
 /// create!(Dog { name: "Bella".to_string(), age: 2, color: "black".to_string() }, &client).unwrap();
 /// let lola = create!(Dog { name: "Lola".to_string(), age: 3, color: "black".to_string() }, &client).unwrap();
-/// assert_eq!(Query::<Dog>::find("age", "3", &client).inter("color", "black").sort("name", None, true, true).unwrap().collect::<Vec<_>>(), 
+/// assert_eq!(Query::<Dog>::find("age", "3", &client).inter("color", "black").sort("name", None, true, true).unwrap().collect::<Vec<_>>(),
 ///     vec![
 ///         buddy.clone(),
 ///         lola.clone(),
