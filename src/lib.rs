@@ -264,7 +264,7 @@ macro_rules! model {
             }
         }
 
-        impl ohmers::Ohmer for $class {
+        impl ::ohmers::Ohmer for $class {
             fn id(&self) -> usize { self.id }
             fn set_id(&mut self, id: usize) { self.id = id; }
 
@@ -282,18 +282,18 @@ macro_rules! model {
                 format!("{}:indices:{}:{}", stringify!($class), field, value)
             }
 
-            fn unique_fields<'a>(&self) -> std::collections::HashSet<&'a str> {
+            fn unique_fields<'a>(&self) -> ::std::collections::HashSet<&'a str> {
                 #![allow(unused_mut)]
-                let mut hs = std::collections::HashSet::new();
+                let mut hs = ::std::collections::HashSet::new();
                 $(
                     hs.insert(stringify!($ukey));
                 )*
                 hs
             }
 
-            fn index_fields<'a>(&self) -> std::collections::HashSet<&'a str> {
+            fn index_fields<'a>(&self) -> ::std::collections::HashSet<&'a str> {
                 #![allow(unused_mut)]
-                let mut hs = std::collections::HashSet::new();
+                let mut hs = ::std::collections::HashSet::new();
                 $(
                     hs.insert(stringify!($ikey));
                 )*
@@ -420,13 +420,13 @@ macro_rules! create {
 #[macro_export]
 macro_rules! find {
     ($class: ident $({ $($key:ident: $value: expr),*, })||*, $conn: expr) => {{
-        ohmers::Query::<$class>::new(
-                ohmers::StalSet::Union(vec![
+        ::ohmers::Query::<$class>::new(
+                ::ohmers::StalSet::Union(vec![
                     $(
-                    ohmers::StalSet::Inter(
+                    ::ohmers::StalSet::Inter(
                         vec![
                         $(
-                            ohmers::Query::<$class>::key(stringify!($key), &*format!("{}", $value)),
+                            ::ohmers::Query::<$class>::key(stringify!($key), &*format!("{}", $value)),
                         )*
                         ]
                     ),
