@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Marker` enum in crate `rmp`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Marker">
+
+    <title>rmp::Marker - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>rmp</a></p><script>window.sidebarCurrent = {name: 'Marker', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>rmp</a>::<wbr><a class='enum' href=''>Marker</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-3010' class='srclink' href='../src/rmp/init.rs.html#6-44' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Marker {
+    FixPos(<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>),
+    FixNeg(<a href='https://doc.rust-lang.org/nightly/std/primitive.i8.html'>i8</a>),
+    Null,
+    True,
+    False,
+    U8,
+    U16,
+    U32,
+    U64,
+    I8,
+    I16,
+    I32,
+    I64,
+    F32,
+    F64,
+    FixStr(<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>),
+    Str8,
+    Str16,
+    Str32,
+    Bin8,
+    Bin16,
+    Bin32,
+    FixArray(<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>),
+    Array16,
+    Array32,
+    FixMap(<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>),
+    Map16,
+    Map32,
+    FixExt1,
+    FixExt2,
+    FixExt4,
+    FixExt8,
+    FixExt16,
+    Ext8,
+    Ext16,
+    Ext32,
+    Reserved,
+}</pre><h2 class='variants'>Variants</h2>
+<table><tr><td id='variant.FixPos'><code>FixPos</code></td><td></td></tr><tr><td id='variant.FixNeg'><code>FixNeg</code></td><td></td></tr><tr><td id='variant.Null'><code>Null</code></td><td></td></tr><tr><td id='variant.True'><code>True</code></td><td></td></tr><tr><td id='variant.False'><code>False</code></td><td></td></tr><tr><td id='variant.U8'><code>U8</code></td><td></td></tr><tr><td id='variant.U16'><code>U16</code></td><td></td></tr><tr><td id='variant.U32'><code>U32</code></td><td></td></tr><tr><td id='variant.U64'><code>U64</code></td><td></td></tr><tr><td id='variant.I8'><code>I8</code></td><td></td></tr><tr><td id='variant.I16'><code>I16</code></td><td></td></tr><tr><td id='variant.I32'><code>I32</code></td><td></td></tr><tr><td id='variant.I64'><code>I64</code></td><td></td></tr><tr><td id='variant.F32'><code>F32</code></td><td></td></tr><tr><td id='variant.F64'><code>F64</code></td><td></td></tr><tr><td id='variant.FixStr'><code>FixStr</code></td><td></td></tr><tr><td id='variant.Str8'><code>Str8</code></td><td></td></tr><tr><td id='variant.Str16'><code>Str16</code></td><td></td></tr><tr><td id='variant.Str32'><code>Str32</code></td><td></td></tr><tr><td id='variant.Bin8'><code>Bin8</code></td><td></td></tr><tr><td id='variant.Bin16'><code>Bin16</code></td><td></td></tr><tr><td id='variant.Bin32'><code>Bin32</code></td><td></td></tr><tr><td id='variant.FixArray'><code>FixArray</code></td><td></td></tr><tr><td id='variant.Array16'><code>Array16</code></td><td></td></tr><tr><td id='variant.Array32'><code>Array32</code></td><td></td></tr><tr><td id='variant.FixMap'><code>FixMap</code></td><td></td></tr><tr><td id='variant.Map16'><code>Map16</code></td><td></td></tr><tr><td id='variant.Map32'><code>Map32</code></td><td></td></tr><tr><td id='variant.FixExt1'><code>FixExt1</code></td><td></td></tr><tr><td id='variant.FixExt2'><code>FixExt2</code></td><td></td></tr><tr><td id='variant.FixExt4'><code>FixExt4</code></td><td></td></tr><tr><td id='variant.FixExt8'><code>FixExt8</code></td><td></td></tr><tr><td id='variant.FixExt16'><code>FixExt16</code></td><td></td></tr><tr><td id='variant.Ext8'><code>Ext8</code></td><td></td></tr><tr><td id='variant.Ext16'><code>Ext16</code></td><td></td></tr><tr><td id='variant.Ext32'><code>Ext32</code></td><td></td></tr><tr><td id='variant.Reserved'><code>Reserved</code></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h3><div class='impl-items'><h4 id='method.from_u8' class='method'><code>fn <a href='#method.from_u8' class='fnname'>from_u8</a>(n: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h4>
+<h4 id='method.to_u8' class='method'><code>fn <a href='#method.to_u8' class='fnname'>to_u8</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../rmp/enum.Marker.html' title='rmp::Marker'>Marker</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "rmp";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

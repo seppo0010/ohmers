@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Set","A set of values. It can be generated from a Redis key or from a set operation based on other sets."]],"struct":[["Stal","An operation to be executed on a set"]]});

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `stal` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, stal">
+
+    <title>stal - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'stal', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>stal</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/stal/lib.rs.html#1-229' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id='stal-rs' class='section-header'><a href='#stal-rs'>stal-rs</a></h1>
+<p>Set algebra solver for Redis in Rust, based on
+<a href="https://github.com/soveran/stal">Stal</a>.</p>
+
+<h2 id='description' class='section-header'><a href='#description'>Description</a></h2>
+<p><code>stal-rs</code> provide set operations and resolves them in <a href="http://redis.io">Redis</a>.</p>
+
+<h2 id='usage' class='section-header'><a href='#usage'>Usage</a></h2>
+<p><code>stal-rs</code> has no dependencies. It produces a vector of Redis operations that
+have to be run by the user.</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>stal</span>;
+
+<span class='kw'>let</span> <span class='ident'>foobar</span> <span class='op'>=</span> <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Inter</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;foo&quot;</span>.<span class='ident'>to_vec</span>()), <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;bar&quot;</span>.<span class='ident'>to_vec</span>())]);
+<span class='kw'>let</span> <span class='ident'>foobar_nobaz</span> <span class='op'>=</span> <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Diff</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>foobar</span>, <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;baz&quot;</span>.<span class='ident'>to_vec</span>())]);
+<span class='kw'>let</span> <span class='ident'>foobar_nobaz_andqux</span> <span class='op'>=</span> <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Union</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;qux&quot;</span>.<span class='ident'>to_vec</span>()), <span class='ident'>foobar_nobaz</span>]);
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(
+   <span class='ident'>stal</span>::<span class='ident'>Stal</span>::<span class='ident'>new</span>(<span class='string'>&quot;SMEMBERS&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>foobar_nobaz_andqux</span>).<span class='ident'>solve</span>(),
+   (
+    <span class='macro'>vec</span><span class='macro'>!</span>[
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;MULTI&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SINTERSTORE&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:2&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;foo&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;bar&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SDIFFSTORE&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:1&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:2&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;baz&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SUNIONSTORE&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:0&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;qux&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:1&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SMEMBERS&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:0&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;DEL&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:0&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:1&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:2&quot;</span>.<span class='ident'>to_vec</span>()],
+        <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;EXEC&quot;</span>.<span class='ident'>to_vec</span>()],
+    ],
+    <span class='number'>4</span>
+   ));</pre>
+
+<p><code>stal-rs</code> translates the internal calls to  <code>SUNION</code>, <code>SDIFF</code> and
+<code>SINTER</code> into <code>SDIFFSTORE</code>, <code>SINTERSTORE</code> and <code>SUNIONSTORE</code> to
+perform the underlying operations, and it takes care of generating
+and deleting any temporary keys.</p>
+
+<p>The outmost command can be any set operation, for example:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>stal</span>;
+<span class='kw'>let</span> <span class='ident'>myset</span> <span class='op'>=</span> <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;my set&quot;</span>.<span class='ident'>to_vec</span>());
+<span class='ident'>stal</span>::<span class='ident'>Stal</span>::<span class='ident'>new</span>(<span class='string'>&quot;SCARD&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>myset</span>).<span class='ident'>solve</span>();</pre>
+
+<p>If you want to preview the commands <code>Stal</code> will send to generate
+the results, you can use <code>Stal.explain</code>:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>stal</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(
+<span class='ident'>stal</span>::<span class='ident'>Stal</span>::<span class='ident'>new</span>(<span class='string'>&quot;SMEMBERS&quot;</span>.<span class='ident'>to_string</span>(),
+        <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Inter</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+            <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Union</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
+                <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;foo&quot;</span>.<span class='ident'>to_vec</span>()),
+                <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;bar&quot;</span>.<span class='ident'>to_vec</span>()),
+                ]),
+            <span class='ident'>stal</span>::<span class='ident'>Set</span>::<span class='ident'>Key</span>(<span class='string'>b&quot;baz&quot;</span>.<span class='ident'>to_vec</span>()),
+            ])
+        ).<span class='ident'>explain</span>(),
+<span class='macro'>vec</span><span class='macro'>!</span>[
+    <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SUNIONSTORE&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:1&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;foo&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;bar&quot;</span>.<span class='ident'>to_vec</span>()],
+    <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SINTERSTORE&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:0&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:1&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;baz&quot;</span>.<span class='ident'>to_vec</span>()],
+    <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;SMEMBERS&quot;</span>.<span class='ident'>to_vec</span>(), <span class='string'>b&quot;stal:0&quot;</span>.<span class='ident'>to_vec</span>()],
+]
+)</pre>
+
+<p>All commands are wrapped in a <code>MULTI/EXEC</code> transaction.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Stal.html'
+                               title='stal::Stal'>Stal</a></td>
+                        <td class='docblock short'>
+                             <p>An operation to be executed on a set</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Set.html'
+                               title='stal::Set'>Set</a></td>
+                        <td class='docblock short'>
+                             <p>A set of values. It can be generated from a Redis key or from a set
+operation based on other sets.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "stal";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `decode` mod in crate `rmp`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, decode">
+
+    <title>rmp::decode - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>rmp</a></p><script>window.sidebarCurrent = {name: 'decode', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>rmp</a>::<wbr><a class='mod' href=''>decode</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-984' class='srclink' href='../../src/rmp/decode.rs.html#1-2444' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Provides various functions and structs for MessagePack decoding.</p>
+
+<p>Most of the function defined in this module will silently handle interruption error (EINTR)
+received from the given <code>Read</code> to be in consistent state with the <code>Write::write_all</code> method in
+the standard library.</p>
+
+<p>Any other error would immediately interrupt the parsing process. If your reader can results in
+I/O error and simultaneously be a recoverable state (for example, when reading from
+non-blocking socket and it returns EWOULDBLOCK) be sure that you buffer the data externally
+to avoid data loss (using <code>BufRead</code> readers with manual consuming or some other way).</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use self::<a class='mod'
+                                            href='./value_ref/index.html'>value_ref</a>::<a class='fn' href='../../rmp/decode/value_ref/fn.read_value_ref.html' title='rmp::decode::value_ref::read_value_ref'>read_value_ref</a>;</code></td></tr><tr><td><code>pub use self::<a class='mod'
+                                            href='./value/index.html'>value</a>::<a class='fn' href='../../rmp/decode/value/fn.read_value.html' title='rmp::decode::value::read_value'>read_value</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='serde/index.html'
+                               title='rmp::decode::serde'>serde</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='serialize/index.html'
+                               title='rmp::decode::serialize'>serialize</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='value/index.html'
+                               title='rmp::decode::value'>value</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='value_ref/index.html'
+                               title='rmp::decode::value_ref'>value_ref</a></td>
+                        <td class='docblock short'>
+                             <p>This module is UNSTABLE, the reason is - recently added.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ExtMeta.html'
+                               title='rmp::decode::ExtMeta'>ExtMeta</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.DecodeStringError.html'
+                               title='rmp::decode::DecodeStringError'>DecodeStringError</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.FixedValueReadError.html'
+                               title='rmp::decode::FixedValueReadError'>FixedValueReadError</a></td>
+                        <td class='docblock short'>
+                             <p>Represents an error that can occur when attempting to read a MessagePack&#39;ed single-byte value
+from the reader.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MarkerReadError.html'
+                               title='rmp::decode::MarkerReadError'>MarkerReadError</a></td>
+                        <td class='docblock short'>
+                             <p>Represents an error that can occur when attempting to read a MessagePack marker from the reader.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ReadError.html'
+                               title='rmp::decode::ReadError'>ReadError</a></td>
+                        <td class='docblock short'>
+                             <p>Represents an error that can occur when attempting to read bytes from the reader.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ValueReadError.html'
+                               title='rmp::decode::ValueReadError'>ValueReadError</a></td>
+                        <td class='docblock short'>
+                             <p>Represents an error that can occur when attempting to read a MessagePack&#39;ed complex value from
+the reader.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_array_size.html'
+                               title='rmp::decode::read_array_size'>read_array_size</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 5 bytes from the given reader and to decode them as a big-endian u32
+array size.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_bin_borrow.html'
+                               title='rmp::decode::read_bin_borrow'>read_bin_borrow</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read some bytes from the given slice until a complete Binary message is decoded,
+returning a borrowed slice with the data.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_bin_len.html'
+                               title='rmp::decode::read_bin_len'>read_bin_len</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 5 bytes from the given reader and to decode them as Binary array length.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_bool.html'
+                               title='rmp::decode::read_bool'>read_bool</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read a single byte from the given reader and to decode it as a boolean value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_ext_meta.html'
+                               title='rmp::decode::read_ext_meta'>read_ext_meta</a></td>
+                        <td class='docblock short'>
+                             <p>Unstable: docs, errors</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_f32.html'
+                               title='rmp::decode::read_f32'>read_f32</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 5 bytes from the given reader and to decode them as <code>f32</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_f64.html'
+                               title='rmp::decode::read_f64'>read_f64</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 9 bytes from the given reader and to decode them as <code>f64</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_fixext1.html'
+                               title='rmp::decode::read_fixext1'>read_fixext1</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 3 bytes from the given reader and interpret them as a fixext1 type
+with data attached.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_fixext16.html'
+                               title='rmp::decode::read_fixext16'>read_fixext16</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 18 bytes from the given reader and interpret them as a fixext16 type
+with data attached.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_fixext2.html'
+                               title='rmp::decode::read_fixext2'>read_fixext2</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 4 bytes from the given reader and interpret them as a fixext2 type
+with data attached.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_fixext4.html'
+                               title='rmp::decode::read_fixext4'>read_fixext4</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 6 bytes from the given reader and interpret them as a fixext4 type
+with data attached.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_fixext8.html'
+                               title='rmp::decode::read_fixext8'>read_fixext8</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 10 bytes from the given reader and interpret them as a fixext8 type
+with data attached.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i16.html'
+                               title='rmp::decode::read_i16'>read_i16</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 3 bytes from the given reader and to decode them as <code>i16</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i16_loosely.html'
+                               title='rmp::decode::read_i16_loosely'>read_i16_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 3 bytes from the given reader and to decode them as <code>i16</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i32.html'
+                               title='rmp::decode::read_i32'>read_i32</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 5 bytes from the given reader and to decode them as <code>i32</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i32_loosely.html'
+                               title='rmp::decode::read_i32_loosely'>read_i32_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 5 bytes from the given reader and to decode them as <code>i32</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i64.html'
+                               title='rmp::decode::read_i64'>read_i64</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 9 bytes from the given reader and to decode them as <code>i64</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i64_loosely.html'
+                               title='rmp::decode::read_i64_loosely'>read_i64_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 9 bytes from the given reader and to decode them as <code>i64</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i8.html'
+                               title='rmp::decode::read_i8'>read_i8</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 2 bytes from the given reader and to decode them as <code>i8</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_i8_loosely.html'
+                               title='rmp::decode::read_i8_loosely'>read_i8_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 2 bytes from the given reader and to decode them as <code>i8</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_map_size.html'
+                               title='rmp::decode::read_map_size'>read_map_size</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 5 bytes from the given reader and to decode them as a big-endian u32
+map size.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_nfix.html'
+                               title='rmp::decode::read_nfix'>read_nfix</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read a single byte from the given reader and to decode it as a negative fixnum
+value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_nil.html'
+                               title='rmp::decode::read_nil'>read_nil</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read a single byte from the given reader and to decode it as a nil value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_pfix.html'
+                               title='rmp::decode::read_pfix'>read_pfix</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read a single byte from the given reader and to decode it as a positive fixnum
+value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_str.html'
+                               title='rmp::decode::read_str'>read_str</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read a string data from the given reader and copy it to the buffer provided.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_str_len.html'
+                               title='rmp::decode::read_str_len'>read_str_len</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 9 bytes from the given reader and to decode them as a string <code>u32</code> size
+value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_str_ref.html'
+                               title='rmp::decode::read_str_ref'>read_str_ref</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read and decode a string value from the reader, returning a borrowed slice from it.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u16.html'
+                               title='rmp::decode::read_u16'>read_u16</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 3 bytes from the given reader and to decode them as <code>u16</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u16_loosely.html'
+                               title='rmp::decode::read_u16_loosely'>read_u16_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 3 bytes from the given reader and to decode them as <code>u16</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u32.html'
+                               title='rmp::decode::read_u32'>read_u32</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 5 bytes from the given reader and to decode them as <code>u32</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u32_loosely.html'
+                               title='rmp::decode::read_u32_loosely'>read_u32_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 5 bytes from the given reader and to decode them as <code>u32</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u64.html'
+                               title='rmp::decode::read_u64'>read_u64</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 9 bytes from the given reader and to decode them as <code>u64</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u64_loosely.html'
+                               title='rmp::decode::read_u64_loosely'>read_u64_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 9 bytes from the given reader and to decode them as <code>u64</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u8.html'
+                               title='rmp::decode::read_u8'>read_u8</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read exactly 2 bytes from the given reader and to decode them as <code>u8</code> value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.read_u8_loosely.html'
+                               title='rmp::decode::read_u8_loosely'>read_u8_loosely</a></td>
+                        <td class='docblock short'>
+                             <p>Attempts to read up to 2 bytes from the given reader and to decode them as <code>u8</code> value.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "rmp";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>
